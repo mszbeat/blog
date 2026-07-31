@@ -1,14 +1,19 @@
+import { Exclude } from 'class-transformer';
 import { UserRole } from '../../common/enums/user.role';
-import { Column, Entity } from 'typeorm';
+import { Column, CreateDateColumn, Entity, PrimaryGeneratedColumn, UpdateDateColumn } from 'typeorm';
 
 @Entity()
 export class User {
+  @PrimaryGeneratedColumn('uuid')
+  id!: string;
+
   @Column({ type: 'varchar', length: 255, nullable: false })
   name!: string;
 
   @Column({ type: 'varchar', length: 255, nullable: false, unique: true })
   email!: string;
 
+  @Exclude() 
   @Column({ type: 'varchar', length: 255, nullable: false })
   password!: string;
 
@@ -18,10 +23,10 @@ export class User {
   @Column({ type: 'text', nullable: true })
   bio?: string;
 
-  @Column({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
+  @CreateDateColumn()
   createdAt!: Date;
 
-  @Column({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP', onUpdate: 'CURRENT_TIMESTAMP' })
+  @UpdateDateColumn()
   updatedAt!: Date;
 
   @Column({type:'text', nullable:true})
