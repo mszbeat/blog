@@ -1,8 +1,12 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, ParseUUIDPipe } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, ParseUUIDPipe, Request, UseGuards } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { ResponseDetail } from '../common/interfaces/response';
+import { ChangePasswordDto } from './dto/change-password.dto';
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { RESPONSE_MESSAGES } from '../common/constants/messages';
+import { User } from './entities/user.entity';
 
 @Controller('users')
 export class UsersController {
@@ -11,63 +15,37 @@ export class UsersController {
   @Post()
   async create(@Body() createUserDto: CreateUserDto): Promise<ResponseDetail> {
     const user = await this.usersService.create(createUserDto);
-    return {
-      message: {
-        en: 'User created successfully',
-        fa: 'کاربر با موفقیت ایجاد شد'
-      },
-      additionalInfo: user
-    };
+    return RESPONSE_MESSAGES.USERS.create(user);
   }
 
   @Get()
-  async findAll(): Promise<ResponseDetail> {
+  async findAll(): Promise<User[]> {
     const users = await this.usersService.findAll();
-    return {
-      message: {
-        fa: 'کاربران با موفقیت بازیابی شدند',
-        en: 'Users retrieved successfully'
-      },
-      additionalInfo: {
-        users
-      }
-    }
+    return users;
   }
 
   @Get(':id')
   async findOne(@Param('id', new ParseUUIDPipe()) id: string): Promise<ResponseDetail> {
-    const user = await this.usersService.findOne(id);
-
-    return {
-      message: {
-        fa: 'کاربر با موفقیت بازیابی شد',
-        en: 'User retrieved successfully'
-      },
-      additionalInfo: user
-    };
+    const user = await this.usersService.findOneById(id);
+    return RESPONSE_MESSAGES.USERS.findOne(user);
   }
 
   @Patch(':id')
   async update(@Param('id', new ParseUUIDPipe()) id: string, @Body() updateUserDto: UpdateUserDto): Promise<ResponseDetail> {
     const updatedUser = await this.usersService.update(id, updateUserDto);
-    return {
-      message: {
-        fa: 'کاربر با موفقیت به‌روزرسانی شد',
-        en: 'User updated successfully'
-      },
-      additionalInfo: updatedUser
-    };
+    return RESPONSE_MESSAGES.USERS.updateUser(updatedUser);
   }
 
   @Delete(':id')
-  async remove(@Param('id', new ParseUUIDPipe()) id: string) : Promise<ResponseDetail> {
+  async remove(@Param('id', new ParseUUIDPipe()) id: string): Promise<ResponseDetail> {
     await this.usersService.remove(id);
-    return {
-      message: {
-        fa: 'کاربر با موفقیت حذف شد',
-        en: 'User deleted successfully'
-      }
-    };
+    return RESPONSE_MESSAGES.USERS.deleteUser;
   }
 
+  @UseGuards(JwtAuthGuard)
+  @Patch('me/password')
+  async changePassword(@Request() req, @Body() changePasswordDto: ChangePasswordDto): Promise<ResponseDetail> {
+    await this.usersService.changePassword(req.user.id, changePasswordDto);
+    return RESPONSE_MESSAGES.USERS.changePassword;
+  }
 }

@@ -3,5 +3,5 @@ export interface ResponseDetail {
     en: string,
     fa: string
   },
-  additionalInfo?: object | null,
+  data?: object | null,
 }
