@@ -43,7 +43,7 @@ export class AuthService {
 
   async generateToken(user: User, meta: { ip?: string, userAgent?: string } = {}) {
     const sessionId = uuid();
-    const payload = { sub: user.id, email: user.email, sessionId };
+    const payload = { id: user.id, email: user.email, sessionId };
 
     const accessExpiresIn = Number(
       this.configService.get<string>('JWT_ACCESS_EXPIRES_IN')
@@ -90,12 +90,13 @@ export class AuthService {
     if (!user) {
       throw ERROR_MESSAGES.USERS.userNotFound;
     }
-
+    
+    await this.sessionService.deleteSession(user.id, sessionId)
     return await this.generateToken(user, meta);
   }
 
   async logout(userId: string, sessionId: string): Promise<void> {
-    await this.sessionService.deleteAllSessionsForUser(userId);
+    await this.sessionService.deleteSession(userId, sessionId);
   }
 
   async logoutAllDevices(userId: string): Promise<void> {

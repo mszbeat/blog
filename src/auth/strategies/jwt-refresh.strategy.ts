@@ -16,7 +16,7 @@ export class JwtRefreshStrategy extends PassportStrategy(Strategy, 'jwt-refresh'
     });
   }
 
-  validate(req: Request, payload: { sub: string; email: string, sessionId: string }) {
+  validate(req: Request, payload: { id: string; email: string, sessionId: string }) {
     const refreshToken = req.headers.authorization?.split('Bearer ')[1];
     if (!refreshToken) {
       throw ERROR_MESSAGES.AUTH.invalidSessionOrToken;

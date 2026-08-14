@@ -6,6 +6,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { AuthModule } from './auth/auth.module';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { RedisModule } from './redis/redis.module';
+import { PostModule } from './posts/post.module';
 
 @Module({
   imports: [
@@ -27,7 +28,7 @@ import { RedisModule } from './redis/redis.module';
     }),
     UsersModule,
     AuthModule,
-    RedisModule
+    RedisModule,
   ],
   controllers: [AppController],
   providers: [AppService],

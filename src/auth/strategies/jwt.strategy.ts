@@ -20,15 +20,15 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     });
   }
 
-  async validate(payload: { sub: string; email: string, sessionId: string }) {
-    const sessionExists = await this.sessionService.sessionExists(payload.sub, payload.sessionId);
+  async validate(payload: { id: string; email: string, sessionId: string }) {
+    const sessionExists = await this.sessionService.sessionExists(payload.id, payload.sessionId);
     if (!sessionExists) {
       throw ERROR_MESSAGES.AUTH.invalidSessionOrToken;
     }
-    const user = await this.usersService.findOneById(payload.sub);
+    const user = await this.usersService.findOneById(payload.id);
     if (!user) {
       throw ERROR_MESSAGES.USERS.userNotFound;
     }
-    return user;
+    return {...user, sessionId: payload.sessionId };
   }
 }

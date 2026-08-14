@@ -7,35 +7,46 @@ import { ChangePasswordDto } from './dto/change-password.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RESPONSE_MESSAGES } from '../common/constants/messages';
 import { User } from './entities/user.entity';
+import { Roles } from '../common/decorators/role.decorator';
+import { UserRole } from '../common/enums/user.role';
+import { RolesGuard } from '../auth/guards/roles.guard';
 
 @Controller('users')
 export class UsersController {
   constructor(private readonly usersService: UsersService) { }
 
+  @UseGuards(JwtAuthGuard,RolesGuard)
+  @Roles(UserRole.ADMIN)
   @Post()
   async create(@Body() createUserDto: CreateUserDto): Promise<ResponseDetail> {
     const user = await this.usersService.create(createUserDto);
     return RESPONSE_MESSAGES.USERS.create(user);
   }
 
+  @UseGuards(JwtAuthGuard,RolesGuard)
+  @Roles(UserRole.ADMIN)
   @Get()
   async findAll(): Promise<User[]> {
     const users = await this.usersService.findAll();
     return users;
   }
 
+  @UseGuards(JwtAuthGuard)
   @Get(':id')
   async findOne(@Param('id', new ParseUUIDPipe()) id: string): Promise<ResponseDetail> {
     const user = await this.usersService.findOneById(id);
     return RESPONSE_MESSAGES.USERS.findOne(user);
   }
 
+  @UseGuards(JwtAuthGuard)
   @Patch(':id')
   async update(@Param('id', new ParseUUIDPipe()) id: string, @Body() updateUserDto: UpdateUserDto): Promise<ResponseDetail> {
     const updatedUser = await this.usersService.update(id, updateUserDto);
     return RESPONSE_MESSAGES.USERS.updateUser(updatedUser);
   }
 
+  @UseGuards(JwtAuthGuard,RolesGuard)
+  @Roles(UserRole.ADMIN)
   @Delete(':id')
   async remove(@Param('id', new ParseUUIDPipe()) id: string): Promise<ResponseDetail> {
     await this.usersService.remove(id);

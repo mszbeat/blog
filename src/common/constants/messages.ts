@@ -1,4 +1,4 @@
-import { ConflictException, UnauthorizedException } from "@nestjs/common"
+import { ConflictException, InternalServerErrorException, UnauthorizedException } from "@nestjs/common"
 
 export const RESPONSE_MESSAGES = {
   AUTH: {
@@ -115,5 +115,8 @@ export const ERROR_MESSAGES = {
         fa: 'رمز عبور نادرست است'
       }
     })
+  },
+  INTERNAL_ERROR: error => {
+    throw new InternalServerErrorException(error)
   }
 }

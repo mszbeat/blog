@@ -7,12 +7,16 @@ import { InjectRepository } from '@nestjs/typeorm';
 import bcrypt from 'bcrypt';
 import { ChangePasswordDto } from './dto/change-password.dto';
 import { ERROR_MESSAGES } from '../common/constants/messages';
+import { UserCacheService } from './user-cache.service';
 
 @Injectable()
 export class UsersService {
+
   constructor(
     @InjectRepository(User)
-    private usersRepo: Repository<User>
+    private usersRepo: Repository<User>,
+
+    private readonly userCacheService: UserCacheService
   ) { }
 
   async create(createUserDto: CreateUserDto): Promise<User> {
@@ -24,6 +28,7 @@ export class UsersService {
     const newUser = this.usersRepo.create({ ...createUserDto, password: hashedPassword });
     await this.usersRepo.save(newUser);
 
+    await this.userCacheService.createCache(newUser);
     return newUser;
   }
 
@@ -32,16 +37,27 @@ export class UsersService {
   }
 
   async findOneById(id: string): Promise<User> {
-    const user: User | null = await this.usersRepo.findOneBy({ id });
+    const cachedUser = await this.userCacheService.getById(id);
+    if (cachedUser) {
+      return cachedUser;
+    }
+
+    const user = await this.usersRepo.findOneBy({ id });
+    if (!user) {
+      throw ERROR_MESSAGES.USERS.userNotFound;
+    }
+
+    await this.userCacheService.createCache(user);
+    return user;
+  }
+
+  async findOneByEmail(email: string): Promise<User | null> {
+    const user = await this.usersRepo.findOneBy({ email });
     if (!user) {
       throw ERROR_MESSAGES.USERS.userNotFound;
     }
 
     return user;
-  }
-
-  async findOneByEmail(email: string): Promise<User | null> {
-    return await this.usersRepo.findOneBy({ email });
   }
 
   async update(id: string, updateUserDto: UpdateUserDto) {
@@ -52,6 +68,8 @@ export class UsersService {
 
     Object.assign(user, updateUserDto);
     const updatedUser = await this.usersRepo.save(user);
+    await this.userCacheService.deleteCache(id);
+    await this.userCacheService.createCache(updatedUser);
     return updatedUser;
   }
 
@@ -61,6 +79,7 @@ export class UsersService {
       throw ERROR_MESSAGES.USERS.userNotFound;
     }
     await this.usersRepo.delete({ id });
+    await this.userCacheService.deleteCache(id);
   }
 
   async changePassword(userId: string, changePasswordDto: ChangePasswordDto): Promise<void> {
