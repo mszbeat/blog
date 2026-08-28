@@ -29,6 +29,7 @@ import { PostModule } from './posts/post.module';
     UsersModule,
     AuthModule,
     RedisModule,
+    PostModule
   ],
   controllers: [AppController],
   providers: [AppService],

@@ -1,4 +1,5 @@
 import { ConflictException, InternalServerErrorException, UnauthorizedException } from "@nestjs/common"
+import { create } from "domain"
 
 export const RESPONSE_MESSAGES = {
   AUTH: {
@@ -72,6 +73,15 @@ export const RESPONSE_MESSAGES = {
       }
     },
 
+  },
+  POSTS: {
+    create: data => ({
+      message: {
+        en: 'New post created successfully',
+        fa: 'پست جدید با موفقیت ایجاد شد'
+      },
+      data
+    }),
   }
 }
 
@@ -118,5 +128,13 @@ export const ERROR_MESSAGES = {
   },
   INTERNAL_ERROR: error => {
     throw new InternalServerErrorException(error)
+  },
+  POSTS:{
+     postAlreadyExists: new ConflictException({
+      message: {
+        en: 'Post already exists',
+        fa: 'این پست موجود است'
+      }
+    }),
   }
 }
