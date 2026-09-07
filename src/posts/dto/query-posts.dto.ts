@@ -1,5 +1,5 @@
-import { IsOptional, IsInt, Min, IsBoolean } from 'class-validator';
-import { Type } from 'class-transformer';
+import { IsOptional, IsInt, Min, IsBoolean, IsString } from 'class-validator';
+import { Transform, Type } from 'class-transformer';
 
 export class QueryPostsDto {
   @IsOptional()
@@ -15,7 +15,16 @@ export class QueryPostsDto {
   limit?: number = 10;
 
   @IsOptional()
-  @Type(() => Boolean)
+  @Transform(({ value }) => {
+    if (typeof value === 'string')
+      value = value === 'false' ? false : true
+    return value
+  })
+  // @Type(() => Boolean)
   @IsBoolean()
   published?: boolean;
+
+  @IsOptional()
+  @IsString()
+  category?: string;
 }

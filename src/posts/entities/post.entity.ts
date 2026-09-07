@@ -1,5 +1,16 @@
-import { Column, CreateDateColumn, Entity, JoinColumn, ManyToOne, PrimaryGeneratedColumn, UpdateDateColumn } from 'typeorm';
+import {
+  Entity,
+  PrimaryGeneratedColumn,
+  Column,
+  ManyToOne,
+  ManyToMany,
+  JoinTable,
+  CreateDateColumn,
+  UpdateDateColumn,
+} from 'typeorm';
 import { User } from '../../user/entities/user.entity';
+import { Category } from '../../categoriy/entities/category.entity'; 
+import { CategoriesModule } from '../../categoriy/categories.module';
 
 @Entity()
 export class Post {
@@ -19,18 +30,24 @@ export class Post {
   excerpt!: string;
 
   @Column({ nullable: true })
-  imageCover!: string;
+  coverImage!: string;
 
-  @Column({ nullable: true })
+  @Column({ default: false })
   published!: boolean;
+
+  @ManyToOne(() => User, { eager: false })
+  author!: User;
 
   @Column()
   authorId!: string;
 
-  @ManyToOne(() => User, { eager: false })
-  @JoinColumn({ name: 'authorId' })
-  author!: User;
-
+  @ManyToMany(() => Category, (category) => category.posts)
+  @JoinTable({
+    name: 'post_categories', 
+    joinColumn: { name: 'postId', referencedColumnName: 'id' },
+    inverseJoinColumn: { name: 'categoryId', referencedColumnName: 'id' },
+  })
+  categories!: Category[]; 
 
   @Column({ default: 0 })
   viewCount!: number;

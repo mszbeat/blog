@@ -9,47 +9,54 @@ import { QueryPostsDto } from './dto/query-posts.dto';
 import { slugify } from '../common/utilities/slug.util';
 import { PaginatedResponse } from '../common/interfaces/paginated-response.interface';
 import { UserRole } from '../common/enums/user.role';
+import { CategoryService } from '../categoriy/categories.service';
 
 @Injectable()
 export class PostService {
   constructor(
     @InjectRepository(Post)
     private postsRepo: Repository<Post>,
-  ) {}
+    private categoriesService: CategoryService
+  ) { }
 
   async create(createPostDto: CreatePostDto, authorId: string): Promise<Post> {
-    const slug = await this.generateUniqueSlug(createPostDto.title);
+    const { categories, ...postData } = createPostDto;
+    const slug = await this.generateUniqueSlug(postData.title);
 
     const post = this.postsRepo.create({
-      ...createPostDto,
+      ...postData,
       slug,
       authorId,
     });
+
+    if (categories && categories.length > 0) {
+      post.categories = await this.categoriesService.findByIds(categories);
+    }
 
     return this.postsRepo.save(post);
   }
 
   async findAll(query: QueryPostsDto): Promise<PaginatedResponse<Post>> {
-    const { page = 1, limit = 10, published } = query;
+    const { page = 1, limit = 10, published, category } = query;
 
-    const where = published !== undefined ? { published } : { published: true };
+    const queryBuilder = this.postsRepo
+      .createQueryBuilder('post')
+      .leftJoinAndSelect('post.author', 'author')
+      .leftJoinAndSelect('post.categories', 'categories')
+      .where('post.published = :published', { published: published ?? true })
+      .orderBy('post.createdAt', 'DESC')
+      .skip((page - 1) * limit)
+      .take(limit);
 
-    const [data, total] = await this.postsRepo.findAndCount({
-      where,
-      relations: ['author'],
-      order: { createdAt: 'DESC' },
-      skip: (page - 1) * limit,
-      take: limit,
-    });
+    if (category) {
+      queryBuilder.andWhere('categories.slug = :category', { category });
+    }
+
+    const [data, total] = await queryBuilder.getManyAndCount();
 
     return {
       data,
-      meta: {
-        total,
-        page,
-        limit,
-        totalPages: Math.ceil(total / limit),
-      },
+      meta: { total, page, limit, totalPages: Math.ceil(total / limit) },
     };
   }
 
@@ -57,7 +64,7 @@ export class PostService {
     const { page = 1, limit = 10 } = query;
 
     const [data, total] = await this.postsRepo.findAndCount({
-      where: { authorId }, 
+      where: { authorId },
       order: { createdAt: 'DESC' },
       skip: (page - 1) * limit,
       take: limit,
@@ -77,7 +84,7 @@ export class PostService {
   async findBySlug(slug: string): Promise<Post> {
     const post = await this.postsRepo.findOne({
       where: { slug },
-      relations: ['author'],
+      relations: ['author', 'categories'],
     });
 
     if (!post) {
@@ -92,7 +99,7 @@ export class PostService {
   async findOneById(id: string): Promise<Post> {
     const post = await this.postsRepo.findOne({
       where: { id },
-      relations: ['author'],
+      relations: ['author', 'categories'],
     });
 
     if (!post) {
@@ -109,14 +116,19 @@ export class PostService {
     currentUserRole: UserRole,
   ): Promise<Post> {
     const post = await this.findOneById(id);
-
     this.checkOwnership(post, currentUserId, currentUserRole);
 
-    if (updatePostDto.title && updatePostDto.title !== post.title) {
-      post.slug = await this.generateUniqueSlug(updatePostDto.title);
+    const { categories, ...postData } = updatePostDto;
+
+    if (postData.title && postData.title !== post.title) {
+      post.slug = await this.generateUniqueSlug(postData.title);
     }
 
-    Object.assign(post, updatePostDto);
+    if (categories) {
+      post.categories = await this.categoriesService.findByIds(categories);
+    }
+
+    Object.assign(post, postData);
     return this.postsRepo.save(post);
   }
 

@@ -13,7 +13,7 @@ export class User {
   @Column({ type: 'varchar', length: 255, nullable: false, unique: true })
   email!: string;
 
-  @Exclude() 
+  @Exclude()
   @Column({ type: 'varchar', length: 255, nullable: false })
   password!: string;
 
@@ -29,6 +29,6 @@ export class User {
   @UpdateDateColumn()
   updatedAt!: Date;
 
-  @Column({type:'text', nullable:true})
+  @Column({ type: 'text', nullable: true })
   profileImage?: string;
 }

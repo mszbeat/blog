@@ -7,6 +7,7 @@ import { AuthModule } from './auth/auth.module';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { RedisModule } from './redis/redis.module';
 import { PostModule } from './posts/post.module';
+import { CategoriesModule } from './categoriy/categories.module';
 
 @Module({
   imports: [
@@ -29,7 +30,8 @@ import { PostModule } from './posts/post.module';
     UsersModule,
     AuthModule,
     RedisModule,
-    PostModule
+    PostModule,
+    CategoriesModule
   ],
   controllers: [AppController],
   providers: [AppService],
