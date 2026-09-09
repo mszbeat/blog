@@ -10,7 +10,6 @@ import {
 } from 'typeorm';
 import { User } from '../../user/entities/user.entity';
 import { Category } from '../../categoriy/entities/category.entity'; 
-import { CategoriesModule } from '../../categoriy/categories.module';
 
 @Entity()
 export class Post {

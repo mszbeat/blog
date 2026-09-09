@@ -74,10 +74,7 @@ export class UsersService {
   }
 
   async remove(id: string): Promise<void> {
-    const existingUser = await this.usersRepo.exist({ where: { id } });
-    if (!existingUser) {
-      throw ERROR_MESSAGES.USERS.userNotFound;
-    }
+    await this.findOneById(id);
     await this.usersRepo.delete({ id });
     await this.userCacheService.deleteCache(id);
   }
@@ -95,5 +92,11 @@ export class UsersService {
     const hashedPassword = await bcrypt.hash(changePasswordDto.newPassword, 10);
     user.password = hashedPassword;
     await this.usersRepo.save(user);
+  }
+
+  async updateAvatar(userId: string, avatarUrl: string): Promise<void> {
+    await this.usersRepo.update({ id: userId }, { avatar: avatarUrl });
+
+    await this.userCacheService.deleteCache(userId);
   }
 }

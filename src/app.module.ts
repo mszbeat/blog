@@ -8,6 +8,9 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { RedisModule } from './redis/redis.module';
 import { PostModule } from './posts/post.module';
 import { CategoriesModule } from './categoriy/categories.module';
+import { CommentModule } from './comment/comment.module';
+import { UploadsModule } from './uploads/uploads.module';
+import { CloudinaryModule } from './cloudinary/cloudinary.module';
 
 @Module({
   imports: [
@@ -31,7 +34,10 @@ import { CategoriesModule } from './categoriy/categories.module';
     AuthModule,
     RedisModule,
     PostModule,
-    CategoriesModule
+    CategoriesModule,
+    CommentModule,
+    UploadsModule,
+    CloudinaryModule
   ],
   controllers: [AppController],
   providers: [AppService],

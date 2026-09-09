@@ -1,4 +1,3 @@
-// category/dto/create-category.dto.ts
 import { IsString, IsNotEmpty, IsOptional, MaxLength } from 'class-validator';
 
 export class CreateCategoryDto {
