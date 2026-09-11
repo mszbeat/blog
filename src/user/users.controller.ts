@@ -1,4 +1,15 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, ParseUUIDPipe, Request, UseGuards } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Patch,
+  Param,
+  Delete,
+  ParseUUIDPipe,
+  Request,
+  UseGuards,
+} from '@nestjs/common';
 import { UsersService } from './users.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
@@ -13,9 +24,9 @@ import { RolesGuard } from '../auth/guards/roles.guard';
 
 @Controller('users')
 export class UsersController {
-  constructor(private readonly usersService: UsersService) { }
+  constructor(private readonly usersService: UsersService) {}
 
-  @UseGuards(JwtAuthGuard,RolesGuard)
+  @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRole.ADMIN)
   @Post()
   async create(@Body() createUserDto: CreateUserDto): Promise<ResponseDetail> {
@@ -23,7 +34,7 @@ export class UsersController {
     return RESPONSE_MESSAGES.USERS.create(user);
   }
 
-  @UseGuards(JwtAuthGuard,RolesGuard)
+  @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRole.ADMIN)
   @Get()
   async findAll(): Promise<User[]> {
@@ -33,29 +44,39 @@ export class UsersController {
 
   @UseGuards(JwtAuthGuard)
   @Get(':id')
-  async findOne(@Param('id', new ParseUUIDPipe()) id: string): Promise<ResponseDetail> {
+  async findOne(
+    @Param('id', new ParseUUIDPipe()) id: string,
+  ): Promise<ResponseDetail> {
     const user = await this.usersService.findOneById(id);
     return RESPONSE_MESSAGES.USERS.findOne(user);
   }
 
   @UseGuards(JwtAuthGuard)
   @Patch(':id')
-  async update(@Param('id', new ParseUUIDPipe()) id: string, @Body() updateUserDto: UpdateUserDto): Promise<ResponseDetail> {
+  async update(
+    @Param('id', new ParseUUIDPipe()) id: string,
+    @Body() updateUserDto: UpdateUserDto,
+  ): Promise<ResponseDetail> {
     const updatedUser = await this.usersService.update(id, updateUserDto);
     return RESPONSE_MESSAGES.USERS.updateUser(updatedUser);
   }
 
-  @UseGuards(JwtAuthGuard,RolesGuard)
+  @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRole.ADMIN)
   @Delete(':id')
-  async remove(@Param('id', new ParseUUIDPipe()) id: string): Promise<ResponseDetail> {
+  async remove(
+    @Param('id', new ParseUUIDPipe()) id: string,
+  ): Promise<ResponseDetail> {
     await this.usersService.remove(id);
     return RESPONSE_MESSAGES.USERS.deleteUser;
   }
 
   @UseGuards(JwtAuthGuard)
   @Patch('me/password')
-  async changePassword(@Request() req, @Body() changePasswordDto: ChangePasswordDto): Promise<ResponseDetail> {
+  async changePassword(
+    @Request() req,
+    @Body() changePasswordDto: ChangePasswordDto,
+  ): Promise<ResponseDetail> {
     await this.usersService.changePassword(req.user.id, changePasswordDto);
     return RESPONSE_MESSAGES.USERS.changePassword;
   }

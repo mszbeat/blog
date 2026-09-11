@@ -1,3 +1,3 @@
 export class CreateUploadDto {
-  avatar!:string 
+  file!: File;
 }

@@ -9,7 +9,7 @@ import {
   UpdateDateColumn,
 } from 'typeorm';
 import { User } from '../../user/entities/user.entity';
-import { Category } from '../../categoriy/entities/category.entity'; 
+import { Category } from '../../categoriy/entities/category.entity';
 
 @Entity()
 export class Post {
@@ -42,11 +42,11 @@ export class Post {
 
   @ManyToMany(() => Category, (category) => category.posts)
   @JoinTable({
-    name: 'post_categories', 
+    name: 'post_categories',
     joinColumn: { name: 'postId', referencedColumnName: 'id' },
     inverseJoinColumn: { name: 'categoryId', referencedColumnName: 'id' },
   })
-  categories!: Category[]; 
+  categories!: Category[];
 
   @Column({ default: 0 })
   viewCount!: number;

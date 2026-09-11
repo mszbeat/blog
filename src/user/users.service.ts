@@ -11,21 +11,25 @@ import { UserCacheService } from './user-cache.service';
 
 @Injectable()
 export class UsersService {
-
   constructor(
     @InjectRepository(User)
     private usersRepo: Repository<User>,
 
-    private readonly userCacheService: UserCacheService
-  ) { }
+    private readonly userCacheService: UserCacheService,
+  ) {}
 
   async create(createUserDto: CreateUserDto): Promise<User> {
-    const existingUser = await this.usersRepo.exist({ where: { email: createUserDto.email } });
+    const existingUser = await this.usersRepo.exist({
+      where: { email: createUserDto.email },
+    });
     if (existingUser) {
       throw ERROR_MESSAGES.USERS.emailAlreadyExists;
     }
     const hashedPassword = await bcrypt.hash(createUserDto.password, 10);
-    const newUser = this.usersRepo.create({ ...createUserDto, password: hashedPassword });
+    const newUser = this.usersRepo.create({
+      ...createUserDto,
+      password: hashedPassword,
+    });
     await this.usersRepo.save(newUser);
 
     await this.userCacheService.createCache(newUser);
@@ -52,12 +56,7 @@ export class UsersService {
   }
 
   async findOneByEmail(email: string): Promise<User | null> {
-    const user = await this.usersRepo.findOneBy({ email });
-    if (!user) {
-      throw ERROR_MESSAGES.USERS.userNotFound;
-    }
-
-    return user;
+    return this.usersRepo.findOneBy({ email });
   }
 
   async update(id: string, updateUserDto: UpdateUserDto) {
@@ -79,10 +78,16 @@ export class UsersService {
     await this.userCacheService.deleteCache(id);
   }
 
-  async changePassword(userId: string, changePasswordDto: ChangePasswordDto): Promise<void> {
+  async changePassword(
+    userId: string,
+    changePasswordDto: ChangePasswordDto,
+  ): Promise<void> {
     const user = await this.findOneById(userId);
 
-    const isMatch = await bcrypt.compare(changePasswordDto.currentPassword, user.password);
+    const isMatch = await bcrypt.compare(
+      changePasswordDto.currentPassword,
+      user.password,
+    );
     if (!isMatch) {
       throw ERROR_MESSAGES.USERS.wrongPassword;
     }

@@ -1,4 +1,15 @@
-import { Controller, Get, Post, Body, Param, ParseUUIDPipe, Res, Req, UseGuards, HttpCode } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Param,
+  ParseUUIDPipe,
+  Res,
+  Req,
+  UseGuards,
+  HttpCode,
+} from '@nestjs/common';
 import { CommentService } from './comment.service';
 import { CreateCommentDto } from './dto/create-comment.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
@@ -7,7 +18,7 @@ import { ResponseDetail } from '../common/interfaces/response';
 
 @Controller('posts/:postId/comments')
 export class CommentController {
-  constructor(private readonly commentService: CommentService) { }
+  constructor(private readonly commentService: CommentService) {}
 
   @Post()
   @UseGuards(JwtAuthGuard)
@@ -16,28 +27,29 @@ export class CommentController {
     @Body() createCommentDto: CreateCommentDto,
     @Req() req,
   ): Promise<ResponseDetail> {
-
-    const result = await this.commentService.create(postId, req.user.id, createCommentDto);
+    const result = await this.commentService.create(
+      postId,
+      req.user.id,
+      createCommentDto,
+    );
     return {
       message: {
         en: 'comment created successfuly',
-        fa: 'کامنت با موفقیت ساخته شد.'
+        fa: 'کامنت با موفقیت ساخته شد.',
       },
-      data: result
+      data: result,
     };
   }
 
   @Get()
-  async findAll(
-    @Param('postId') postId: UUID,
-  ): Promise<ResponseDetail> {
-    const result = await this.commentService.findAll(postId)
+  async findAll(@Param('postId') postId: UUID): Promise<ResponseDetail> {
+    const result = await this.commentService.findAll(postId);
     return {
       message: {
         en: 'comments retrieved successfully',
-        fa: 'کامت ها با موفقیت بازیابی شد.'
+        fa: 'کامت ها با موفقیت بازیابی شد.',
       },
-      data: result
+      data: result,
     };
   }
 }

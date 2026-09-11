@@ -9,7 +9,9 @@ export const multerConfig = {
   fileFilter: (req, file, callback) => {
     if (!file.mimetype.match(/\/(jpg|jpeg|png|webp)$/)) {
       return callback(
-        new BadRequestException('Only image files (jpg, jpeg, png, webp) are allowed'),
+        new BadRequestException(
+          'Only image files (jpg, jpeg, png, webp) are allowed',
+        ),
         false,
       );
     }

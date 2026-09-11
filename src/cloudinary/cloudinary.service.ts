@@ -11,9 +11,9 @@ export class CloudinaryService {
     return new Promise((resolve, reject) => {
       const uploadStream = cloudinary.uploader.upload_stream(
         {
-          folder, // مثلاً 'blog/avatars' یا 'blog/covers'
+          folder,
           resource_type: 'image',
-          transformation: [{ width: 1000, height: 1000, crop: 'limit' }], // جلوگیری از آپلود تصاویر خیلی بزرگ
+          transformation: [{ width: 1000, height: 1000, crop: 'limit' }],
         },
         (error, result) => {
           if (error || !result) {

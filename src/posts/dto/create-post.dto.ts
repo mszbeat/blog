@@ -1,6 +1,12 @@
-import { Transform } from 'class-transformer';
-import { IsString, IsNotEmpty, IsOptional, IsBoolean, MaxLength, IsEnum, IsArray, IsUUID } from 'class-validator';
-import { Category } from '../../categoriy/entities/category.entity';
+import {
+  IsString,
+  IsNotEmpty,
+  IsOptional,
+  IsBoolean,
+  MaxLength,
+  IsArray,
+  IsUUID,
+} from 'class-validator';
 
 export class CreatePostDto {
   @IsString()
@@ -28,5 +34,5 @@ export class CreatePostDto {
   @IsArray()
   @IsUUID('4', { each: true })
   @IsOptional()
-  categories?: string[]; 
+  categories?: string[];
 }

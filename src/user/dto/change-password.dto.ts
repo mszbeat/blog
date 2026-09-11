@@ -14,6 +14,8 @@ export class ChangePasswordDto {
 
   @IsNotEmpty()
   @IsString()
-  @Match('newPassword', { message: 'Confirm new password must match new password' })
+  @Match('newPassword', {
+    message: 'Confirm new password must match new password',
+  })
   confirmNewPassword!: string;
 }

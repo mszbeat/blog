@@ -11,9 +11,18 @@ import { CategoriesModule } from './categoriy/categories.module';
 import { CommentModule } from './comment/comment.module';
 import { UploadsModule } from './uploads/uploads.module';
 import { CloudinaryModule } from './cloudinary/cloudinary.module';
+import { ThrottlerModule } from '@nestjs/throttler/dist/throttler.module';
+import { APP_GUARD } from '@nestjs/core';
+import { ThrottlerGuard } from '@nestjs/throttler';
 
 @Module({
   imports: [
+    ThrottlerModule.forRoot([
+      {
+        ttl: 60,
+        limit: 10,
+      },
+    ]),
     ConfigModule.forRoot({
       isGlobal: true,
     }),
@@ -37,9 +46,15 @@ import { CloudinaryModule } from './cloudinary/cloudinary.module';
     CategoriesModule,
     CommentModule,
     UploadsModule,
-    CloudinaryModule
+    CloudinaryModule,
   ],
   controllers: [AppController],
-  providers: [AppService],
+  providers: [
+    {
+      provide: APP_GUARD,
+      useClass: ThrottlerGuard,
+    },
+    AppService,
+  ],
 })
-export class AppModule { }
+export class AppModule {}

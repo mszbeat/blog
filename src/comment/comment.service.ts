@@ -1,4 +1,8 @@
-import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  ForbiddenException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { CreateCommentDto } from './dto/create-comment.dto';
 import { UpdateCommentDto } from './dto/update-comment.dto';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -7,23 +11,27 @@ import { Repository } from 'typeorm';
 import { PostService } from '../posts/post.service';
 import { UUID } from 'crypto';
 import { UserRole } from '../common/enums/user.role';
-import { promises } from 'dns';
+import { ERROR_MESSAGES } from '../common/constants/messages';
 
 @Injectable()
 export class CommentService {
   constructor(
     @InjectRepository(Comment)
     private commentRepo: Repository<Comment>,
-    private postService: PostService
-  ) { }
+    private postService: PostService,
+  ) {}
 
-  async create(postId: UUID, authorId: UUID, createCommentDto: CreateCommentDto): Promise<Comment> {
+  async create(
+    postId: UUID,
+    authorId: UUID,
+    createCommentDto: CreateCommentDto,
+  ): Promise<Comment> {
     await this.postService.findOneById(postId);
     const newComment = this.commentRepo.create({
       ...createCommentDto,
       postId,
-      authorId
-    })
+      authorId,
+    });
 
     await this.commentRepo.save(newComment);
     return newComment;
@@ -31,21 +39,29 @@ export class CommentService {
 
   async findAll(postId): Promise<Comment[]> {
     await this.postService.findOneById(postId);
-    return this.commentRepo.find({ where:{postId}, order:{createdAt:'DESC'} });
+    return this.commentRepo.find({
+      where: { postId },
+      order: { createdAt: 'DESC' },
+    });
   }
 
   async findOne(id: UUID): Promise<Comment> {
-    const comment = await this.commentRepo.findOneBy({ id })
+    const comment = await this.commentRepo.findOneBy({ id });
     if (!comment) {
-      throw new NotFoundException(`کامنتی با id ${id} یافت نشد.`)
+      throw ERROR_MESSAGES.COMMENTS.commentNotFound;
     }
     return comment;
   }
 
-  async update(id: UUID, authorId: UUID, role: UserRole, updateCommentDto: UpdateCommentDto) {
+  async update(
+    id: UUID,
+    authorId: UUID,
+    role: UserRole,
+    updateCommentDto: UpdateCommentDto,
+  ) {
     const comment = await this.findOne(id);
     if (comment.authorId !== authorId && role !== UserRole.ADMIN) {
-      throw new ForbiddenException('access denied.')
+      throw ERROR_MESSAGES.AUTH.accessDenied;
     }
     Object.assign(comment, updateCommentDto);
     await this.commentRepo.save(comment);
@@ -56,7 +72,7 @@ export class CommentService {
   async remove(id: UUID, authorId: UUID, role: UserRole): Promise<void> {
     const comment = await this.findOne(id);
     if (comment.authorId !== authorId && role !== UserRole.ADMIN) {
-      throw new ForbiddenException('access denied.')
+      throw ERROR_MESSAGES.AUTH.accessDenied;
     }
     await this.commentRepo.delete(id);
   }

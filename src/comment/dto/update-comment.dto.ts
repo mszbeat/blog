@@ -1,8 +1,8 @@
-import { IsNotEmpty, IsString, MaxLength } from "class-validator";
+import { IsNotEmpty, IsString, MaxLength } from 'class-validator';
 
-export class UpdateCommentDto  {
+export class UpdateCommentDto {
   @IsString()
   @IsNotEmpty()
   @MaxLength(1000)
-  content!:string;
+  content!: string;
 }

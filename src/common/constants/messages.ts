@@ -1,140 +1,189 @@
-import { ConflictException, InternalServerErrorException, UnauthorizedException } from "@nestjs/common"
-import { create } from "domain"
+import {
+  BadRequestException,
+  ConflictException,
+  ForbiddenException,
+  InternalServerErrorException,
+  NotFoundException,
+  UnauthorizedException,
+} from '@nestjs/common';
 
 export const RESPONSE_MESSAGES = {
   AUTH: {
-    register: data => ({
+    register: (data) => ({
       message: {
         en: 'User created successfully',
-        fa: 'کاربر با موفقیت ایجاد شد'
+        fa: 'کاربر با موفقیت ایجاد شد',
       },
-      data
+      data,
     }),
-    login: data => ({
+    login: (data) => ({
       message: {
         en: 'Login successful',
-        fa: 'با موفقیت وارد شدید'
+        fa: 'با موفقیت وارد شدید',
       },
-      data
+      data,
     }),
-    refreshToken: data => ({
+    refreshToken: (data) => ({
       message: {
         fa: 'توکن جدبد با موفقیت ساخته شد',
-        en: 'Token refreshed successfully'
+        en: 'Token refreshed successfully',
       },
-      data
+      data,
     }),
     logout: {
       message: {
         en: 'Logged out successfully',
-        fa: 'با موفقیت خارج شد'
-      }
+        fa: 'با موفقیت خارج شد',
+      },
     },
-    getMe: data => ({
+    getMe: (data) => ({
       message: {
         en: 'Profile retrieved successfully',
-        fa: 'پروفایل با موفقیت بازیابی شد'
+        fa: 'پروفایل با موفقیت بازیابی شد',
       },
-      data
-    })
+      data,
+    }),
   },
   USERS: {
-    create: data => ({
+    create: (data) => ({
       message: {
         en: 'User created successfully',
-        fa: 'کاربر با موفقیت ایجاد شد'
+        fa: 'کاربر با موفقیت ایجاد شد',
       },
-      data
+      data,
     }),
-    findOne: data => ({
+    findOne: (data) => ({
       message: {
         fa: 'کاربر با موفقیت بازیابی شد',
-        en: 'User retrieved successfully'
+        en: 'User retrieved successfully',
       },
-      data
+      data,
     }),
-    updateUser: data => ({
+    updateUser: (data) => ({
       message: {
         fa: 'کاربر با موفقیت به‌روزرسانی شد',
-        en: 'User updated successfully'
+        en: 'User updated successfully',
       },
-      data
+      data,
     }),
     deleteUser: {
       message: {
         fa: 'کاربر با موفقیت حذف شد',
-        en: 'User deleted successfully'
-      }
+        en: 'User deleted successfully',
+      },
     },
     changePassword: {
       message: {
         fa: 'رمز عبور با موفقیت به‌روزرسانی شد',
-        en: 'Password updated successfully'
-      }
+        en: 'Password updated successfully',
+      },
     },
-
   },
   POSTS: {
-    create: data => ({
+    create: (data) => ({
       message: {
         en: 'New post created successfully',
-        fa: 'پست جدید با موفقیت ایجاد شد'
+        fa: 'پست جدید با موفقیت ایجاد شد',
       },
-      data
+      data,
     }),
-  }
-}
+  },
+};
 
 export const ERROR_MESSAGES = {
   AUTH: {
-    invalidCredentials: new UnauthorizedException({
+    invalidCredentials: new BadRequestException({
       message: {
         en: 'Invalid credentials',
-        fa: 'اطلاعات ورود نامعتبر است'
-      }
+        fa: 'اطلاعات ورود نامعتبر است',
+      },
     }),
     invalidSessionOrToken: new UnauthorizedException({
       message: {
         en: 'Invalid session or refresh token',
-        fa: 'جلسه یا توکن تازه‌سازی نامعتبر است'
-      }
-    })
+        fa: 'جلسه یا توکن تازه‌سازی نامعتبر است',
+      },
+    }),
+    throttlerException: {
+      message: {
+        en: 'Too many requests',
+        fa: 'درخواست‌های بیش از حد',
+      },
+    },
+    accessDenied: new ForbiddenException({
+      message: {
+        en: 'Access denied',
+        fa: 'دسترسی مجاز نیست',
+      },
+    }),
+    unAuthorized: new UnauthorizedException({
+      fa: 'لطفاً وارد شوید',
+      en: 'Unauthorized',
+    }),
   },
   USERS: {
     emailAlreadyExists: new ConflictException({
       message: {
         en: 'Email already exists',
-        fa: 'ایمیل قبلاً استفاده شده است'
-      }
+        fa: 'ایمیل قبلاً استفاده شده است',
+      },
     }),
-    userNotFound: new UnauthorizedException({
+    userNotFound: new NotFoundException({
       message: {
         en: 'User not found',
-        fa: 'کاربر یافت نشد'
-      }
+        fa: 'کاربر یافت نشد',
+      },
     }),
     conflictPassword: new ConflictException({
       message: {
         en: 'New password cannot be the same as the current password',
-        fa: 'رمز عبور جدید نمی‌تواند با رمز عبور فعلی یکسان باشد'
-      }
+        fa: 'رمز عبور جدید نمی‌تواند با رمز عبور فعلی یکسان باشد',
+      },
     }),
-    wrongPassword: new ConflictException({
+    wrongPassword: new BadRequestException({
       message: {
         en: 'password is incorrect',
-        fa: 'رمز عبور نادرست است'
-      }
-    })
+        fa: 'رمز عبور نادرست است',
+      },
+    }),
   },
-  INTERNAL_ERROR: error => {
-    throw new InternalServerErrorException(error)
+  INTERNAL_ERROR: (error) => {
+    throw new InternalServerErrorException(error);
   },
-  POSTS:{
-     postAlreadyExists: new ConflictException({
+  POSTS: {
+    postAlreadyExists: new ConflictException({
       message: {
         en: 'Post already exists',
-        fa: 'این پست موجود است'
-      }
+        fa: 'این پست موجود است',
+      },
     }),
-  }
-}
+  },
+  COMMENTS: {
+    commentNotFound: new NotFoundException({
+      message: {
+        en: 'Comment not found',
+        fa: 'کامنت یافت نشد',
+      },
+    }),
+  },
+  CATEGORIES: {
+    categoryNotFound: new NotFoundException({
+      message: {
+        en: 'Category not found',
+        fa: 'دسته‌بندی یافت نشد',
+      },
+    }),
+    categoryAlreadyExists: new ConflictException({
+      message: {
+        en: 'Category already exists',
+        fa: 'دسته‌بندی قبلاً ایجاد شده است',
+      },
+    }),
+    categoriesNotFound: new NotFoundException({
+      message: {
+        en: 'One or more categories not found',
+        fa: 'یک یا چند دسته‌بندی یافت نشد',
+      },
+    }),
+  },
+};

@@ -36,7 +36,10 @@ export class UploadsController {
   ): Promise<ResponseDetail> {
     const url = await this.uploadsService.uploadAvatar(file, req.user.id);
     return {
-      message: { fa: 'عکس پروفایل با موفقیت آپلود شد', en: 'Avatar uploaded successfully' },
+      message: {
+        fa: 'عکس پروفایل با موفقیت آپلود شد',
+        en: 'Avatar uploaded successfully',
+      },
       data: { url },
     };
   }
@@ -57,7 +60,10 @@ export class UploadsController {
   ): Promise<ResponseDetail> {
     const url = await this.uploadsService.uploadCover(file);
     return {
-      message: { fa: 'تصویر کاور با موفقیت آپلود شد', en: 'Cover image uploaded successfully' },
+      message: {
+        fa: 'تصویر کاور با موفقیت آپلود شد',
+        en: 'Cover image uploaded successfully',
+      },
       data: { url },
     };
   }

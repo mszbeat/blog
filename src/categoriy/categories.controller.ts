@@ -1,4 +1,3 @@
-// category/category.controller.ts
 import {
   Controller,
   Get,
@@ -21,15 +20,20 @@ import { ResponseDetail } from '../common/interfaces/response';
 
 @Controller('categories')
 export class CategoryController {
-  constructor(private readonly categoriesService: CategoryService) { }
+  constructor(private readonly categoriesService: CategoryService) {}
 
   @Post()
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRole.ADMIN)
-  async create(@Body() createCategoryDto: CreateCategoryDto): Promise<ResponseDetail> {
+  async create(
+    @Body() createCategoryDto: CreateCategoryDto,
+  ): Promise<ResponseDetail> {
     const category = await this.categoriesService.create(createCategoryDto);
     return {
-      message: { fa: 'دسته‌بندی با موفقیت ایجاد شد', en: 'Category created successfully' },
+      message: {
+        fa: 'دسته‌بندی با موفقیت ایجاد شد',
+        en: 'Category created successfully',
+      },
       data: category,
     };
   }
@@ -38,7 +42,10 @@ export class CategoryController {
   async findAll(): Promise<ResponseDetail> {
     const categories = await this.categoriesService.findAll();
     return {
-      message: { fa: 'دسته‌بندی‌ها با موفقیت بازیابی شدند', en: 'Categories retrieved successfully' },
+      message: {
+        fa: 'دسته‌بندی‌ها با موفقیت بازیابی شدند',
+        en: 'Categories retrieved successfully',
+      },
       data: { categories },
     };
   }
@@ -47,7 +54,10 @@ export class CategoryController {
   async findBySlug(@Param('slug') slug: string): Promise<ResponseDetail> {
     const category = await this.categoriesService.findBySlug(slug);
     return {
-      message: { fa: 'دسته‌بندی با موفقیت بازیابی شد', en: 'Category retrieved successfully' },
+      message: {
+        fa: 'دسته‌بندی با موفقیت بازیابی شد',
+        en: 'Category retrieved successfully',
+      },
       data: category,
     };
   }
@@ -61,7 +71,10 @@ export class CategoryController {
   ): Promise<ResponseDetail> {
     const category = await this.categoriesService.update(id, updateCategoryDto);
     return {
-      message: { fa: 'دسته‌بندی با موفقیت به‌روزرسانی شد', en: 'Category updated successfully' },
+      message: {
+        fa: 'دسته‌بندی با موفقیت به‌روزرسانی شد',
+        en: 'Category updated successfully',
+      },
       data: category,
     };
   }
@@ -69,10 +82,15 @@ export class CategoryController {
   @Delete(':id')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRole.ADMIN)
-  async remove(@Param('id', ParseUUIDPipe) id: string): Promise<ResponseDetail> {
+  async remove(
+    @Param('id', ParseUUIDPipe) id: string,
+  ): Promise<ResponseDetail> {
     await this.categoriesService.remove(id);
     return {
-      message: { fa: 'دسته‌بندی با موفقیت حذف شد', en: 'Category deleted successfully' }
+      message: {
+        fa: 'دسته‌بندی با موفقیت حذف شد',
+        en: 'Category deleted successfully',
+      },
     };
   }
 }

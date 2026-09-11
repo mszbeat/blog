@@ -9,8 +9,8 @@ import { SessionInterface } from './interfaces/session.interface';
 export class SessionService {
   constructor(
     @Inject(REDIS_CLIENT) private readonly redisClient: Redis,
-    private configService: ConfigService
-  ) { }
+    private configService: ConfigService,
+  ) {}
 
   private getKey(userId: string, sessionId: string): string {
     return `session:${userId}:${sessionId}`;
@@ -20,8 +20,8 @@ export class SessionService {
     userId: string,
     sessionId: string,
     refreshToken: string,
-    meta: { ip?: string, userAgent?: string },
-    ttlSeconds: number
+    meta: { ip?: string; userAgent?: string },
+    ttlSeconds: number,
   ): Promise<string> {
     const session: SessionInterface = {
       userId,
@@ -35,7 +35,11 @@ export class SessionService {
     return sessionId;
   }
 
-  async validateSession(userId: string, sessionId: string, refreshToken: string): Promise<boolean> {
+  async validateSession(
+    userId: string,
+    sessionId: string,
+    refreshToken: string,
+  ): Promise<boolean> {
     const key = this.getKey(userId, sessionId);
     const sessionData = await this.redisClient.get(key);
     if (!sessionData) {
@@ -66,11 +70,15 @@ export class SessionService {
     }
 
     const values = await this.redisClient.mget(keys);
-    return values.filter(Boolean).map(value => JSON.parse(value as string) as SessionInterface);
+    return values
+      .filter(Boolean)
+      .map((value) => JSON.parse(value as string) as SessionInterface);
   }
 
   async sessionExists(userId: string, sessionId: string): Promise<boolean> {
-    const exists = await this.redisClient.exists(this.getKey(userId, sessionId));
+    const exists = await this.redisClient.exists(
+      this.getKey(userId, sessionId),
+    );
     return exists === 1;
   }
 }

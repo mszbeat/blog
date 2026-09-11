@@ -5,12 +5,12 @@ export class RegisterDto {
   @IsString()
   @IsNotEmpty()
   name!: string;
-  
+
   @IsEmail()
   @IsNotEmpty()
   @IsNotEmpty()
   email!: string;
-  
+
   @IsString()
   @IsNotEmpty()
   @MinLength(6)

@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { UsersService } from '../user/users.service';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
-import *as bcrypt from 'bcrypt';
+import * as bcrypt from 'bcrypt';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import { User } from '../user/entities/user.entity';
@@ -16,8 +16,8 @@ export class AuthService {
     private usersService: UsersService,
     private jwtService: JwtService,
     private configService: ConfigService,
-    private sessionService: SessionService
-  ) { }
+    private sessionService: SessionService,
+  ) {}
 
   async register(registerDto: RegisterDto) {
     const user = await this.usersService.create(registerDto);
@@ -41,15 +41,18 @@ export class AuthService {
     return { user, ...tokens };
   }
 
-  async generateToken(user: User, meta: { ip?: string, userAgent?: string } = {}) {
+  async generateToken(
+    user: User,
+    meta: { ip?: string; userAgent?: string } = {},
+  ) {
     const sessionId = uuid();
     const payload = { id: user.id, email: user.email, sessionId };
 
     const accessExpiresIn = Number(
-      this.configService.get<string>('JWT_ACCESS_EXPIRES_IN')
+      this.configService.get<string>('JWT_ACCESS_EXPIRES_IN'),
     );
     const refreshExpiresIn: number = Number(
-      this.configService.get<string>('JWT_REFRESH_EXPIRES_IN')
+      this.configService.get<string>('JWT_REFRESH_EXPIRES_IN'),
     );
 
     const [accessToken, refreshToken] = await Promise.all([
@@ -60,16 +63,18 @@ export class AuthService {
       this.jwtService.signAsync(payload, {
         secret: this.configService.get<string>('JWT_REFRESH_SECRET'),
         expiresIn: refreshExpiresIn,
-      })
+      }),
     ]);
 
-    const expirationSession = Number(this.configService.get<string>('SESSION_EXPIRATION'));
+    const expirationSession = Number(
+      this.configService.get<string>('SESSION_EXPIRATION'),
+    );
     await this.sessionService.saveSession(
       user.id,
       sessionId,
       refreshToken,
       meta,
-      expirationSession
+      expirationSession,
     );
 
     return { accessToken, refreshToken };
@@ -79,9 +84,13 @@ export class AuthService {
     userId: string,
     sessionId: string,
     refreshToken: string,
-    meta: { ip?: string, userAgent?: string }
+    meta: { ip?: string; userAgent?: string },
   ) {
-    const isValidSession = await this.sessionService.validateSession(userId, sessionId, refreshToken);
+    const isValidSession = await this.sessionService.validateSession(
+      userId,
+      sessionId,
+      refreshToken,
+    );
     if (!isValidSession) {
       throw ERROR_MESSAGES.AUTH.invalidSessionOrToken;
     }
@@ -90,8 +99,8 @@ export class AuthService {
     if (!user) {
       throw ERROR_MESSAGES.USERS.userNotFound;
     }
-    
-    await this.sessionService.deleteSession(user.id, sessionId)
+
+    await this.sessionService.deleteSession(user.id, sessionId);
     return await this.generateToken(user, meta);
   }
 

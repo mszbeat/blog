@@ -11,7 +11,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
   constructor(
     private configService: ConfigService,
     private usersService: UsersService,
-    private readonly sessionService: SessionService
+    private readonly sessionService: SessionService,
   ) {
     super({
       jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
@@ -20,8 +20,11 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     });
   }
 
-  async validate(payload: { id: string; email: string, sessionId: string }) {
-    const sessionExists = await this.sessionService.sessionExists(payload.id, payload.sessionId);
+  async validate(payload: { id: string; email: string; sessionId: string }) {
+    const sessionExists = await this.sessionService.sessionExists(
+      payload.id,
+      payload.sessionId,
+    );
     if (!sessionExists) {
       throw ERROR_MESSAGES.AUTH.invalidSessionOrToken;
     }
@@ -29,6 +32,6 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     if (!user) {
       throw ERROR_MESSAGES.USERS.userNotFound;
     }
-    return {...user, sessionId: payload.sessionId };
+    return { ...user, sessionId: payload.sessionId };
   }
 }

@@ -16,11 +16,9 @@ export class QueryPostsDto {
 
   @IsOptional()
   @Transform(({ value }) => {
-    if (typeof value === 'string')
-      value = value === 'false' ? false : true
-    return value
+    if (typeof value === 'string') value = value === 'false' ? false : true;
+    return value;
   })
-  // @Type(() => Boolean)
   @IsBoolean()
   published?: boolean;
 
