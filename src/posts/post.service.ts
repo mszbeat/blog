@@ -1,5 +1,8 @@
-// post/post.service.ts
-import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  ForbiddenException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Post } from './entities/post.entity';
@@ -10,14 +13,16 @@ import { slugify } from '../common/utilities/slug.util';
 import { PaginatedResponse } from '../common/interfaces/paginated-response.interface';
 import { UserRole } from '../common/enums/user.role';
 import { CategoryService } from '../categoriy/categories.service';
+import { PostCacheService } from './post-cache.service';
 
 @Injectable()
 export class PostService {
   constructor(
     @InjectRepository(Post)
     private postsRepo: Repository<Post>,
-    private categoriesService: CategoryService
-  ) { }
+    private categoriesService: CategoryService,
+    private postCacheService: PostCacheService,
+  ) {}
 
   async create(createPostDto: CreatePostDto, authorId: string): Promise<Post> {
     const { categories, ...postData } = createPostDto;
@@ -33,11 +38,19 @@ export class PostService {
       post.categories = await this.categoriesService.findByIds(categories);
     }
 
-    return this.postsRepo.save(post);
+    const savedPost = await this.postsRepo.save(post);
+
+    await this.postCacheService.invalidateAllLists();
+
+    return savedPost;
   }
 
   async findAll(query: QueryPostsDto): Promise<PaginatedResponse<Post>> {
     const { page = 1, limit = 10, published, category } = query;
+    const cachedList = await this.postCacheService.getList(query);
+    if (cachedList) {
+      return cachedList;
+    }
 
     const queryBuilder = this.postsRepo
       .createQueryBuilder('post')
@@ -54,13 +67,19 @@ export class PostService {
 
     const [data, total] = await queryBuilder.getManyAndCount();
 
+    const meta = { total, page, limit, totalPages: Math.ceil(total / limit) };
+    await this.postCacheService.cacheList(query, { data, meta });
+
     return {
       data,
-      meta: { total, page, limit, totalPages: Math.ceil(total / limit) },
+      meta,
     };
   }
 
-  async findMyPosts(authorId: string, query: QueryPostsDto): Promise<PaginatedResponse<Post>> {
+  async findMyPosts(
+    authorId: string,
+    query: QueryPostsDto,
+  ): Promise<PaginatedResponse<Post>> {
     const { page = 1, limit = 10 } = query;
 
     const [data, total] = await this.postsRepo.findAndCount({
@@ -82,6 +101,12 @@ export class PostService {
   }
 
   async findBySlug(slug: string): Promise<Post> {
+    const cached = await this.postCacheService.getPostBySlug(slug);
+    if (cached) {
+      this.postsRepo.increment({ id: cached.id }, 'viewCount', 1);
+      return cached;
+    }
+
     const post = await this.postsRepo.findOne({
       where: { slug },
       relations: ['author', 'categories'],
@@ -92,6 +117,8 @@ export class PostService {
     }
 
     this.postsRepo.increment({ id: post.id }, 'viewCount', 1);
+
+    await this.postCacheService.cachePost(post);
 
     return post;
   }
@@ -129,18 +156,38 @@ export class PostService {
     }
 
     Object.assign(post, postData);
-    return this.postsRepo.save(post);
+    const updatedPost = await this.postsRepo.save(post);
+
+    await Promise.all([
+      this.postCacheService.deletePostCache(post.slug),
+      this.postCacheService.invalidateAllLists(),
+    ]);
+
+    return updatedPost;
   }
 
-  async remove(id: string, currentUserId: string, currentUserRole: UserRole): Promise<void> {
+  async remove(
+    id: string,
+    currentUserId: string,
+    currentUserRole: UserRole,
+  ): Promise<void> {
     const post = await this.findOneById(id);
 
     this.checkOwnership(post, currentUserId, currentUserRole);
 
     await this.postsRepo.delete({ id });
+
+    await Promise.all([
+      this.postCacheService.deletePostCache(post.slug),
+      this.postCacheService.invalidateAllLists(),
+    ]);
   }
 
-  private checkOwnership(post: Post, currentUserId: string, currentUserRole: UserRole): void {
+  private checkOwnership(
+    post: Post,
+    currentUserId: string,
+    currentUserRole: UserRole,
+  ): void {
     const isOwner = post.authorId === currentUserId;
     const isAdmin = currentUserRole === UserRole.ADMIN;
 
