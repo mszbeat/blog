@@ -19,7 +19,7 @@ export class CommentService {
     @InjectRepository(Comment)
     private commentRepo: Repository<Comment>,
     private postService: PostService,
-  ) {}
+  ) { }
 
   async create(
     postId: UUID,
@@ -27,6 +27,9 @@ export class CommentService {
     createCommentDto: CreateCommentDto,
   ): Promise<Comment> {
     await this.postService.findOneById(postId);
+    if (createCommentDto.parentId) {
+      await this.findOne(createCommentDto.parentId)
+    }
     const newComment = this.commentRepo.create({
       ...createCommentDto,
       postId,
