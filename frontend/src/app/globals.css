@@ -1,0 +1,403 @@
+@import 'tailwindcss';
+
+/* Class-based dark mode (Tailwind v4 syntax). */
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* ═══════════════════════════════════════════════════════════════════
+   Design tokens — "Editorial Social"
+   Warm-cool neutrals, a confident indigo accent, three elevation levels.
+   Token NAMES are stable so every component keeps working; only the
+   values and the additions are new.
+   ═══════════════════════════════════════════════════════════════════ */
+@theme {
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-fa: var(--font-vazirmatn), var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: ui-monospace, 'SFMono-Regular', Menlo, Consolas, monospace;
+
+  /* Brand — indigo/violet */
+  --color-brand-50: #eef1ff;
+  --color-brand-100: #e0e5ff;
+  --color-brand-200: #c6ccfe;
+  --color-brand-300: #a3a8fc;
+  --color-brand-400: #8083f8;
+  --color-brand-500: #6366f1;
+  --color-brand-600: #5046e5;
+  --color-brand-700: #4338ca;
+  --color-brand-800: #3730a3;
+  --color-brand-900: #2e2a7d;
+
+  /* Accent — teal, used sparingly for highlights */
+  --color-accent-300: #5eead4;
+  --color-accent-400: #2dd4bf;
+  --color-accent-500: #14b8a6;
+  --color-accent-600: #0d9488;
+
+  /* Semantic */
+  --color-danger-500: #f43f5e;
+  --color-danger-600: #e11d48;
+
+  --radius-card: 1.25rem;
+  --radius-xl2: 1.5rem;
+
+  --animate-fade-up: fade-up 0.4s cubic-bezier(0.16, 1, 0.3, 1) both;
+  --animate-fade-in: fade-in 0.25s ease both;
+  --animate-scale-in: scale-in 0.2s cubic-bezier(0.16, 1, 0.3, 1) both;
+  --animate-shimmer: shimmer 1.7s linear infinite;
+  --animate-pop: pop 0.35s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+  --animate-ring: ring-spin 8s linear infinite;
+
+  @keyframes fade-up {
+    from { opacity: 0; transform: translateY(12px); }
+    to { opacity: 1; transform: none; }
+  }
+  @keyframes fade-in { from { opacity: 0; } to { opacity: 1; } }
+  @keyframes scale-in {
+    from { opacity: 0; transform: scale(0.96); }
+    to { opacity: 1; transform: none; }
+  }
+  @keyframes shimmer {
+    from { background-position: 200% 0; }
+    to { background-position: -200% 0; }
+  }
+  @keyframes pop {
+    0% { transform: scale(1); }
+    45% { transform: scale(1.28); }
+    100% { transform: scale(1); }
+  }
+  @keyframes ring-spin { to { transform: rotate(360deg); } }
+}
+
+/* ── Light ── */
+:root {
+  --surface: #ffffff;
+  --surface-2: #f6f7fb;      /* page background */
+  --surface-3: #eef0f6;      /* subtle fills */
+  --surface-4: #e5e8f1;
+  --ink: #0e1017;
+  --ink-2: #4b5162;
+  --ink-3: #7d849a;
+  --ink-4: #a3a9bc;
+  --line: #e7e9f0;
+  --line-strong: #d6dae6;
+
+  --elev-1: 0 1px 2px rgba(14, 16, 23, 0.04), 0 1px 3px rgba(14, 16, 23, 0.06);
+  --elev-2: 0 2px 4px rgba(14, 16, 23, 0.04), 0 8px 20px -6px rgba(14, 16, 23, 0.10);
+  --elev-3: 0 4px 8px rgba(14, 16, 23, 0.05), 0 18px 40px -12px rgba(14, 16, 23, 0.18);
+  --elev-brand: 0 8px 22px -8px rgba(80, 70, 229, 0.45);
+}
+
+/* ── Dark: page is DARKER than cards, so cards read as elevated ── */
+.dark {
+  --surface: #12151d;
+  --surface-2: #0a0c11;
+  --surface-3: #1a1e29;
+  --surface-4: #232838;
+  --ink: #eef1f8;
+  --ink-2: #a5adc1;
+  --ink-3: #767e94;
+  --ink-4: #5a6175;
+  --line: #1e232e;
+  --line-strong: #2b3140;
+
+  --elev-1: 0 1px 2px rgba(0, 0, 0, 0.4);
+  --elev-2: 0 2px 6px rgba(0, 0, 0, 0.4), 0 10px 24px -8px rgba(0, 0, 0, 0.55);
+  --elev-3: 0 6px 14px rgba(0, 0, 0, 0.45), 0 24px 48px -16px rgba(0, 0, 0, 0.7);
+  --elev-brand: 0 8px 24px -8px rgba(99, 102, 241, 0.4);
+}
+
+@theme inline {
+  --color-surface: var(--surface);
+  --color-surface-2: var(--surface-2);
+  --color-surface-3: var(--surface-3);
+  --color-surface-4: var(--surface-4);
+  --color-ink: var(--ink);
+  --color-ink-2: var(--ink-2);
+  --color-ink-3: var(--ink-3);
+  --color-ink-4: var(--ink-4);
+  --color-line: var(--line);
+  --color-line-strong: var(--line-strong);
+
+  --shadow-elev-1: var(--elev-1);
+  --shadow-elev-2: var(--elev-2);
+  --shadow-elev-3: var(--elev-3);
+  --shadow-brand: var(--elev-brand);
+}
+
+@layer base {
+  * { border-color: var(--line); }
+
+  html {
+    -webkit-text-size-adjust: 100%;
+    scroll-behavior: smooth;
+    scrollbar-gutter: stable;
+  }
+
+  body {
+    background-color: var(--surface-2);
+    color: var(--ink);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+  }
+
+  html[lang='fa'] body { font-family: var(--font-fa); line-height: 1.9; }
+  html[lang='en'] body { line-height: 1.7; }
+
+  /* Headings get tighter tracking at large sizes — reads more "designed". */
+  h1, h2, h3, h4 { letter-spacing: -0.022em; text-wrap: balance; }
+  html[lang='fa'] h1, html[lang='fa'] h2, html[lang='fa'] h3 { letter-spacing: 0; }
+
+  p { text-wrap: pretty; }
+
+  ::selection { background: var(--color-brand-500); color: #fff; }
+
+  :focus-visible {
+    outline: 2px solid var(--color-brand-500);
+    outline-offset: 2px;
+    border-radius: 6px;
+  }
+
+  ::-webkit-scrollbar { width: 11px; height: 11px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb {
+    background: var(--line-strong);
+    border-radius: 99px;
+    border: 3px solid var(--surface-2);
+  }
+  ::-webkit-scrollbar-thumb:hover { background: var(--ink-4); }
+}
+
+@layer components {
+  /* ── Cards / elevation ── */
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: var(--radius-card);
+    box-shadow: var(--elev-1);
+  }
+  .card-hover {
+    transition: transform 0.22s cubic-bezier(0.16, 1, 0.3, 1),
+                box-shadow 0.22s ease, border-color 0.22s ease;
+  }
+  .card-hover:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--elev-2);
+    border-color: var(--line-strong);
+  }
+
+  /* ── Glass panel (sticky sidebars, floating bars) ── */
+  .glass {
+    background: color-mix(in oklab, var(--surface) 78%, transparent);
+    backdrop-filter: blur(16px) saturate(160%);
+    -webkit-backdrop-filter: blur(16px) saturate(160%);
+    border: 1px solid var(--line);
+  }
+
+  /* ── Instagram-style gradient avatar ring ── */
+  .avatar-ring {
+    position: relative;
+    padding: 2px;
+    border-radius: 9999px;
+    background: conic-gradient(
+      from 180deg,
+      var(--color-brand-500),
+      var(--color-accent-400),
+      #f472b6,
+      #fb923c,
+      var(--color-brand-500)
+    );
+  }
+  .avatar-ring > * { border-radius: 9999px; }
+  .avatar-ring-static {
+    background: linear-gradient(135deg, var(--color-brand-500), var(--color-accent-400));
+  }
+
+  /* ── Feed action button (like/comment/share row) ── */
+  .feed-action {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    border-radius: 0.75rem;
+    padding: 0.5rem 0.75rem;
+    font-size: 0.8125rem;
+    font-weight: 600;
+    color: var(--ink-3);
+    transition: background-color 0.16s ease, color 0.16s ease, transform 0.16s ease;
+  }
+  .feed-action:hover { background: var(--surface-3); color: var(--ink); }
+  .feed-action:active { transform: scale(0.95); }
+  .feed-action[data-active='true'] { color: var(--color-brand-600); }
+  .dark .feed-action[data-active='true'] { color: var(--color-brand-300); }
+
+  /* ── Chips ── */
+  .chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.375rem;
+    border-radius: 9999px;
+    border: 1px solid var(--line-strong);
+    background: var(--surface);
+    padding: 0.375rem 0.875rem;
+    font-size: 0.8125rem;
+    font-weight: 600;
+    color: var(--ink-2);
+    white-space: nowrap;
+    transition: all 0.16s ease;
+  }
+  .chip:hover { border-color: var(--color-brand-400); color: var(--color-brand-600); }
+  .dark .chip:hover { color: var(--color-brand-300); }
+  .chip[data-active='true'] {
+    background: var(--color-brand-600);
+    border-color: var(--color-brand-600);
+    color: #fff;
+    box-shadow: var(--elev-brand);
+  }
+
+  /* ── Skeleton ── */
+  .skeleton {
+    background: linear-gradient(
+      90deg,
+      var(--surface-3) 25%,
+      color-mix(in oklab, var(--surface-3) 45%, var(--surface)) 50%,
+      var(--surface-3) 75%
+    );
+    background-size: 200% 100%;
+    animation: var(--animate-shimmer);
+    border-radius: 0.5rem;
+  }
+
+  /* ── Divider with centred label ── */
+  .divider-text {
+    display: flex; align-items: center; gap: 0.875rem;
+    color: var(--ink-4); font-size: 0.75rem; font-weight: 600;
+  }
+  .divider-text::before, .divider-text::after {
+    content: ''; flex: 1; height: 1px; background: var(--line);
+  }
+}
+
+@layer utilities {
+  .no-scrollbar { scrollbar-width: none; }
+  .no-scrollbar::-webkit-scrollbar { display: none; }
+
+  /* Digits stay tabular and LTR even inside Persian text. */
+  .num-en { font-variant-numeric: tabular-nums; direction: ltr; unicode-bidi: isolate; }
+
+  .elev-1 { box-shadow: var(--elev-1); }
+  .elev-2 { box-shadow: var(--elev-2); }
+  .elev-3 { box-shadow: var(--elev-3); }
+
+  /* Clamp a post body to N lines with a soft fade before "see more". */
+  .clamp-fade {
+    position: relative;
+  }
+  .clamp-fade::after {
+    content: '';
+    position: absolute;
+    inset-inline: 0; bottom: 0; height: 3.5rem;
+    background: linear-gradient(to bottom, transparent, var(--surface));
+    pointer-events: none;
+  }
+
+  /* Grid background used behind heroes. */
+  .bg-grid {
+    background-image:
+      linear-gradient(to right, var(--line) 1px, transparent 1px),
+      linear-gradient(to bottom, var(--line) 1px, transparent 1px);
+    background-size: 56px 56px;
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   Prose — rendered post & comment bodies
+   ═══════════════════════════════════════════════════════════════ */
+.prose-blog {
+  color: var(--ink-2);
+  font-size: 1.0625rem;
+  line-height: 2;
+}
+html[lang='en'] .prose-blog { line-height: 1.85; }
+
+/* Slightly smaller for inline feed previews. */
+.prose-feed { font-size: 0.9375rem; line-height: 1.95; }
+html[lang='en'] .prose-feed { line-height: 1.8; }
+
+.prose-blog > * + * { margin-block-start: 1.1em; }
+
+.prose-blog h2, .prose-blog h3, .prose-blog h4 {
+  color: var(--ink);
+  font-weight: 700;
+  line-height: 1.4;
+  margin-block-start: 1.85em;
+  margin-block-end: 0.55em;
+  scroll-margin-top: 6rem;
+}
+.prose-blog h2 { font-size: 1.45rem; }
+.prose-blog h3 { font-size: 1.2rem; }
+.prose-blog h4 { font-size: 1.05rem; }
+
+.prose-blog strong { color: var(--ink); font-weight: 700; }
+
+.prose-blog a {
+  color: var(--color-brand-600);
+  text-decoration: underline;
+  text-decoration-color: color-mix(in oklab, var(--color-brand-500) 35%, transparent);
+  text-underline-offset: 3px;
+  transition: text-decoration-color 0.15s ease;
+}
+.prose-blog a:hover { text-decoration-color: var(--color-brand-500); }
+.dark .prose-blog a { color: var(--color-brand-300); }
+
+.prose-blog ul, .prose-blog ol { padding-inline-start: 1.4em; }
+.prose-blog ul { list-style: disc; }
+.prose-blog ol { list-style: decimal; }
+.prose-blog li + li { margin-block-start: 0.4em; }
+.prose-blog li::marker { color: var(--color-brand-500); }
+
+.prose-blog blockquote {
+  border-inline-start: 3px solid var(--color-brand-500);
+  background: var(--surface-2);
+  padding: 0.9em 1.2em;
+  border-radius: 0 0.625rem 0.625rem 0;
+  color: var(--ink);
+  font-style: italic;
+}
+html[dir='rtl'] .prose-blog blockquote { border-radius: 0.625rem 0 0 0.625rem; }
+
+.prose-blog code {
+  font-family: var(--font-mono);
+  font-size: 0.86em;
+  background: var(--surface-3);
+  color: var(--color-brand-700);
+  padding: 0.16em 0.42em;
+  border-radius: 0.32rem;
+  direction: ltr;
+  unicode-bidi: embed;
+}
+.dark .prose-blog code { color: var(--color-brand-300); }
+
+.prose-blog pre {
+  background: var(--surface-3);
+  padding: 1em 1.2em;
+  border-radius: 0.75rem;
+  overflow-x: auto;
+  border: 1px solid var(--line);
+}
+.prose-blog pre code { background: none; padding: 0; color: var(--ink); }
+
+.prose-blog table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.94em;
+  display: block;
+  overflow-x: auto;
+}
+.prose-blog th, .prose-blog td {
+  border: 1px solid var(--line);
+  padding: 0.55em 0.85em;
+  text-align: start;
+}
+.prose-blog th { background: var(--surface-3); color: var(--ink); font-weight: 600; }
+
+.prose-blog hr { border: 0; border-block-start: 1px solid var(--line); margin-block: 2em; }
