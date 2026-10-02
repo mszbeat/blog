@@ -64,9 +64,12 @@ export class AuthService {
         ip: meta.ip,
         reason: (err as Error)?.message,
       });
-      this.audit.auth('REGISTER_FAILED', { email: registerDto.email }, meta, {
-        reason: (err as Error)?.message,
-      });
+      this.audit.auth(
+        'REGISTER_FAILED',
+        { email: registerDto.email },
+        meta,
+        { reason: (err as Error)?.message },
+      );
       throw err;
     }
   }
@@ -234,10 +237,7 @@ export class AuthService {
     this.audit.auth('LOGOUT', { id: userId }, meta, { sessionId });
   }
 
-  async logoutAllDevices(
-    userId: string,
-    meta: RequestMeta = {},
-  ): Promise<void> {
+  async logoutAllDevices(userId: string, meta: RequestMeta = {}): Promise<void> {
     await this.sessionService.deleteAllSessionsForUser(userId);
     // Revoking every session is a strong, user-visible security action (usually
     // taken after suspecting a compromise) — always audited.

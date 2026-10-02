@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { NextIntlClientProvider, hasLocale } from 'next-intl';
 import { getTranslations, setRequestLocale } from 'next-intl/server';
-import { Inter, Vazirmatn } from 'next/font/google';
+import { Inter, Vazirmatn, Amiri } from 'next/font/google';
 import { routing, isRtl } from '@/i18n/routing';
 import { Providers } from '@/components/providers';
 import { SiteHeader } from '@/components/layout/site-header';
@@ -13,7 +13,7 @@ import { DrawerProvider } from '@/lib/drawer-context';
 import { LiveNotificationToast } from '@/components/notifications/live-toast';
 
 /* Self-hosted by next/font — they keep working inside the offline preview. */
-const inter = Inter({
+const inter = Vazirmatn({
   subsets: ['latin'],
   variable: '--font-inter',
   display: 'swap',

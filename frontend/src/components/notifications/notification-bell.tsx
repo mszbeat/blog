@@ -111,7 +111,7 @@ export function NotificationBell({ className }: { className?: string }) {
               'ring-2 ring-surface-2 shadow-plum',
             )}
           >
-            {count > 99 ? '99+' : formatNumber(count, 'en')}
+            {count > 99 ? '99+' : formatNumber(count, locale)}
           </span>
         )}
       </button>
@@ -121,7 +121,10 @@ export function NotificationBell({ className }: { className?: string }) {
           role="dialog"
           aria-label={t('title')}
           className={cn(
-            'absolute end-0 mt-2 w-[min(23rem,calc(100vw-2rem))] overflow-hidden rounded-2xl',
+            'fixed left-1/2 top-[4.5rem] z-50',
+            'w-[min(23rem,calc(100vw-2rem))]',
+            '-translate-x-1/2',
+            'overflow-hidden rounded-2xl',
             'border border-line bg-surface shadow-elev-3 animate-slide-down',
           )}
         >

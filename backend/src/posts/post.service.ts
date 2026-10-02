@@ -136,21 +136,16 @@ export class PostService {
         select: ['id', 'likeCount', 'commentCount', 'viewCount'],
       }),
       viewerId
-        ? this.likesRepo.find({
-            where: { userId: viewerId, postId: In(ids) },
-            select: ['postId'],
-          })
+        ? this.likesRepo.find({ where: { userId: viewerId, postId: In(ids) }, select: ['postId'] })
         : Promise.resolve([]),
     ]);
     const counts = new Map(fresh.map((p) => [p.id, p]));
     const likedIds = new Set(likes.map((l) => l.postId));
-    return posts
-      .filter((p) => counts.has(p.id))
-      .map((p) => ({
-        ...p,
-        ...counts.get(p.id),
-        likedByMe: likedIds.has(p.id),
-      }));
+    return posts.filter((p) => counts.has(p.id)).map((p) => ({
+      ...p,
+      ...counts.get(p.id),
+      likedByMe: likedIds.has(p.id),
+    }));
   }
 
   async findMyPosts(
@@ -267,11 +262,7 @@ export class PostService {
       post.categories = await this.categoriesService.findByIds(categories);
     }
 
-    const before = {
-      title: post.title,
-      slug: post.slug,
-      published: post.published,
-    };
+    const before = { title: post.title, slug: post.slug, published: post.published };
     Object.assign(post, postData);
     const updatedPost = await this.postsRepo.save(post);
 

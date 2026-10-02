@@ -1,7 +1,10 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { In, IsNull, Repository } from 'typeorm';
-import { Notification, NotificationType } from './entities/notification.entity';
+import {
+  Notification,
+  NotificationType,
+} from './entities/notification.entity';
 import { PaginatedResponse } from '../common/interfaces/paginated-response.interface';
 import { QueryNotificationsDto } from './dto/query-notifications.dto';
 import { AppLoggerService } from '../logger/app-logger.service';

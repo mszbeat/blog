@@ -20,8 +20,7 @@ export class OptionalJwtAuthGuard extends AuthGuard('jwt') {
     // Add the passport machinery to the request, then always allow through.
     const handler = super.canActivate(context);
     if (typeof handler === 'boolean') return true;
-    if (handler instanceof Promise)
-      return handler.then(() => true).catch(() => true);
+    if (handler instanceof Promise) return handler.then(() => true).catch(() => true);
     return true;
   }
 }

@@ -43,7 +43,7 @@ export class CommentService {
     });
 
     await this.commentRepo.save(newComment);
-    await this.postService.bumpCommentCount(postId, 1);
+    await this.postService.bumpCommentCount(postId as string, 1);
 
     /* Notify everyone who should hear about this, in one pass:
      *   • the post author            → type `comment`
@@ -59,9 +59,9 @@ export class CommentService {
       if (parent) {
         await this.notifications.notify({
           userId: parent.authorId,
-          actorId: authorId,
+          actorId: authorId as string,
           type: NotificationType.REPLY,
-          postId: postId,
+          postId: postId as string,
           commentId: newComment.id,
           excerpt,
         });
@@ -70,9 +70,9 @@ export class CommentService {
 
     await this.notifications.notify({
       userId: post.authorId,
-      actorId: authorId,
+      actorId: authorId as string,
       type: NotificationType.COMMENT,
-      postId: postId,
+      postId: postId as string,
       commentId: newComment.id,
       excerpt,
     });
@@ -88,7 +88,7 @@ export class CommentService {
       action: 'CREATE',
       entity: 'comment',
       entityId: newComment.id,
-      actorId: authorId,
+      actorId: authorId as string,
       actorType: 'user',
       metadata: { postId, parentId: createCommentDto.parentId ?? null },
     });
@@ -120,10 +120,7 @@ export class CommentService {
   ) {
     const comment = await this.findOne(id);
     if (comment.authorId !== authorId && role !== UserRole.ADMIN) {
-      this.log.warn('Comment update denied', {
-        commentId: id,
-        actorId: authorId,
-      });
+      this.log.warn('Comment update denied', { commentId: id, actorId: authorId });
       throw ERROR_MESSAGES.AUTH.accessDenied;
     }
     const before = { content: comment.content };
@@ -139,7 +136,7 @@ export class CommentService {
       action: 'UPDATE',
       entity: 'comment',
       entityId: id,
-      actorId: authorId,
+      actorId: authorId as string,
       actorType: comment.authorId === authorId ? 'user' : 'admin',
       before,
       after: { content: comment.content },
@@ -151,10 +148,7 @@ export class CommentService {
   async remove(id: UUID, authorId: UUID, role: UserRole): Promise<void> {
     const comment = await this.findOne(id);
     if (comment.authorId !== authorId && role !== UserRole.ADMIN) {
-      this.log.warn('Comment delete denied', {
-        commentId: id,
-        actorId: authorId,
-      });
+      this.log.warn('Comment delete denied', { commentId: id, actorId: authorId });
       throw ERROR_MESSAGES.AUTH.accessDenied;
     }
     await this.commentRepo.delete(id);
@@ -173,7 +167,7 @@ export class CommentService {
       action: 'DELETE',
       entity: 'comment',
       entityId: id,
-      actorId: authorId,
+      actorId: authorId as string,
       actorType: comment.authorId === authorId ? 'user' : 'admin',
       before: { postId: comment.postId, content: comment.content },
     });

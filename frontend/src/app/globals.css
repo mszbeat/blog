@@ -182,6 +182,9 @@
   --grad-mesh:
     radial-gradient(at 12% 8%, color-mix(in oklab, var(--color-brand-500) 16%, transparent) 0, transparent 52%),
     radial-gradient(at 88% 4%, color-mix(in oklab, var(--color-plum-500) 13%, transparent) 0, transparent 48%),
+    radial-gradient(at 88% 4%, color-mix(in oklab, var(--color-plum-500) 13%, transparent) 0, transparent 48%),
+    radial-gradient(at 88% 4%, color-mix(in oklab, var(--color-plum-900) 13%, transparent) 0, transparent 48%),
+    radial-gradient(at 88% 4%, color-mix(in oklab, var(--color-plum-500) 13%, transparent) 0, transparent 48%),
     radial-gradient(at 62% 96%, color-mix(in oklab, var(--color-accent-500) 12%, transparent) 0, transparent 50%);
   /* شبکه‌ی خطوط پس‌زمینه */
   --grad-grid:
@@ -196,12 +199,12 @@
   /* ── ۸) گرادیان پوشش پست / آیکون دسته‌بندی ──
      lib/utils.ts → gradientFor() بر اساس هشِ شناسه یکی از این شش کلاس
      (grad-1 … grad-6) را برمی‌گرداند. */
-  --grad-1-from: #6366f1;  --grad-1-to: #a855f7;
-  --grad-2-from: #0ea5e9;  --grad-2-to: #22d3ee;
-  --grad-3-from: #f59e0b;  --grad-3-to: #f43f5e;
-  --grad-4-from: #10b981;  --grad-4-to: #0ea5e9;
-  --grad-5-from: #8b5cf6;  --grad-5-to: #ec4899;
-  --grad-6-from: #14b8a6;  --grad-6-to: #84cc16;
+  --grad-1-from: #1f204a43;  --grad-1-to: #341a4c40;
+  --grad-2-from: #03293b41;  --grad-2-to: #0c424a3e;
+  --grad-3-from: #4d32043e;  --grad-3-to: #57182245;
+  --grad-4-from: #04392749;  --grad-4-to: #03263646;
+  --grad-5-from: #1e143643;  --grad-5-to: #3d132844;
+  --grad-6-from: #052d2844;  --grad-6-to: #1e2e0543;
 }
 
 /* ── Dark: navy-plum base. The page is darker than the cards so cards read

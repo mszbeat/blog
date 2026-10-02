@@ -10,7 +10,6 @@ import {
   Query,
   Request,
   UseGuards,
-  Req,
 } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { CreateUserDto } from './dto/create-user.dto';
@@ -167,7 +166,7 @@ export class UsersController {
   @UseGuards(JwtAuthGuard)
   @Patch('me/password')
   async changePassword(
-    @Req() req,
+    @Request() req,
     @Body() changePasswordDto: ChangePasswordDto,
   ): Promise<ResponseDetail> {
     await this.usersService.changePassword(req.user.id, changePasswordDto);

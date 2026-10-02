@@ -37,9 +37,8 @@ export class RequestContextInterceptor implements NestInterceptor {
     const handler = context.getHandler();
     const controller = context.getClass();
     const route =
-      (req.route?.path
-        ? `${req.baseUrl ?? ''}${req.route.path}`
-        : req.originalUrl) ?? req.url;
+      (req.route?.path ? `${req.baseUrl ?? ''}${req.route.path}` : req.originalUrl) ??
+      req.url;
 
     // Bind identity into the ambient scope for the rest of this request.
     const user = (req as Request & { user?: any }).user;
@@ -81,7 +80,5 @@ export class RequestContextInterceptor implements NestInterceptor {
 }
 
 function elapsedMs(startedAt: bigint): number {
-  return (
-    Math.round((Number(process.hrtime.bigint() - startedAt) / 1e6) * 100) / 100
-  );
+  return Math.round((Number(process.hrtime.bigint() - startedAt) / 1e6) * 100) / 100;
 }

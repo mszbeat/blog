@@ -70,18 +70,11 @@ export class SocialService {
         .orIgnore()
         .execute();
 
-      await this.notifications
-        .notify({
-          userId: followingId,
-          actorId: followerId,
-          type: NotificationType.FOLLOW,
-        })
-        .catch((error) =>
-          this.log.error('Follow notification failed', {
-            error: String(error),
-            followingId,
-          }),
-        );
+      await this.notifications.notify({
+        userId: followingId,
+        actorId: followerId,
+        type: NotificationType.FOLLOW,
+      }).catch((error) => this.log.error('Follow notification failed', { error: String(error), followingId }));
 
       this.log.info('User followed', { followerId, followingId });
     }
@@ -89,10 +82,7 @@ export class SocialService {
     return this.followState(followerId, followingId);
   }
 
-  async unfollow(
-    followerId: string,
-    followingId: string,
-  ): Promise<FollowState> {
+  async unfollow(followerId: string, followingId: string): Promise<FollowState> {
     await this.followRepo.delete({ followerId, followingId });
     this.log.info('User unfollowed', { followerId, followingId });
     return this.followState(followerId, followingId);
@@ -107,9 +97,7 @@ export class SocialService {
       this.followRepo.count({ where: { followingId: userId } }),
       this.followRepo.count({ where: { followerId: userId } }),
       viewerId && viewerId !== userId
-        ? this.followRepo.exist({
-            where: { followerId: viewerId, followingId: userId },
-          })
+        ? this.followRepo.exist({ where: { followerId: viewerId, followingId: userId } })
         : Promise.resolve(false),
     ]);
     return { isFollowing, followersCount, followingCount };
@@ -142,14 +130,16 @@ export class SocialService {
     await this.assertUserExists(userId);
 
     const [rows, total] = await this.followRepo.findAndCount({
-      where: { [sideColumn]: userId },
+      where: { [sideColumn]: userId } as any,
       relations: [relation],
       order: { createdAt: 'DESC' },
       skip: (page - 1) * limit,
       take: limit,
     });
 
-    const data = rows.map((r) => r[relation]).filter((u): u is User => !!u);
+    const data = rows
+      .map((r) => r[relation])
+      .filter((u): u is User => !!u);
 
     return {
       data,
@@ -174,8 +164,7 @@ export class SocialService {
       const posts = manager.getRepository(Post);
       const likes = manager.getRepository(Like);
       const post = await posts.findOne({
-        where: { id: postId },
-        lock: { mode: 'pessimistic_write' },
+        where: { id: postId }, lock: { mode: 'pessimistic_write' },
       });
       if (!post) throw ERROR_MESSAGES.POSTS.postNotFound;
       const existing = await likes.findOne({ where: { userId, postId } });
@@ -185,41 +174,17 @@ export class SocialService {
       // Recount also repairs drift from earlier non-transactional writes.
       const likeCount = await likes.count({ where: { postId } });
       await posts.update(postId, { likeCount });
-      return {
-        liked,
-        likeCount,
-        post: { ...post, likeCount },
-        notify: liked && !existing,
-      };
+      return { liked, likeCount, post: { ...post, likeCount } as Post, notify: liked && !existing };
     });
     if (result.notify) {
       // A notification failure must not turn a committed like into an HTTP
       // error: that would make the client roll back data which WAS persisted.
-      await this.notifications
-        .notify({
-          userId: result.post.authorId,
-          actorId: userId,
-          type: NotificationType.LIKE,
-          postId,
-        })
-        .catch((error) =>
-          this.log.error('Like notification failed', {
-            error: String(error),
-            postId,
-          }),
-        );
+      await this.notifications.notify({
+        userId: result.post.authorId, actorId: userId, type: NotificationType.LIKE, postId,
+      }).catch((error) => this.log.error('Like notification failed', { error: String(error), postId }));
     }
-    this.log.debug('Like state saved', {
-      userId,
-      postId,
-      liked: result.liked,
-      likeCount: result.likeCount,
-    });
-    return {
-      liked: result.liked,
-      likeCount: result.likeCount,
-      post: result.post,
-    };
+    this.log.debug('Like state saved', { userId, postId, liked: result.liked, likeCount: result.likeCount });
+    return { liked: result.liked, likeCount: result.likeCount, post: result.post };
   }
 
   async likeState(
@@ -286,10 +251,7 @@ export class SocialService {
     return rows.map((r) => r.postId);
   }
 
-  async likedPostIds(
-    userId: string | null,
-    postIds: string[],
-  ): Promise<string[]> {
+  async likedPostIds(userId: string | null, postIds: string[]): Promise<string[]> {
     if (!userId || postIds.length === 0) return [];
     const rows = await this.likeRepo.find({
       where: { userId, postId: In(postIds) },
@@ -299,10 +261,7 @@ export class SocialService {
   }
 
   /** Batch follow-state for a list of authors (sidebar / feed personalisation). */
-  async followingIds(
-    userId: string | null,
-    authorIds: string[],
-  ): Promise<string[]> {
+  async followingIds(userId: string | null, authorIds: string[]): Promise<string[]> {
     if (!userId || authorIds.length === 0) return [];
     const rows = await this.followRepo.find({
       where: { followerId: userId, followingId: In(authorIds) },

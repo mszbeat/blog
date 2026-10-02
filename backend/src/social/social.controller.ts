@@ -38,10 +38,7 @@ export class SocialController {
   ): Promise<ResponseDetail> {
     const state = await this.social.follow(req.user.id, id);
     return {
-      message: {
-        en: 'User followed successfully',
-        fa: 'کاربر با موفقیت دنبال شد',
-      },
+      message: { en: 'User followed successfully', fa: 'کاربر با موفقیت دنبال شد' },
       data: state,
     };
   }
@@ -88,11 +85,7 @@ export class SocialController {
     @Body() body: SetLikeDto,
     @Req() req,
   ): Promise<ResponseDetail> {
-    const { liked, likeCount } = await this.social.toggleLike(
-      req.user.id,
-      postId,
-      body?.liked,
-    );
+    const { liked, likeCount } = await this.social.toggleLike(req.user.id, postId, body?.liked);
     return {
       message: {
         en: liked ? 'Post liked successfully' : 'Like removed successfully',
@@ -155,11 +148,6 @@ export class SocialController {
         },
       });
     }
-    return this.social.likedPosts(
-      id,
-      Number(page) || 1,
-      Number(limit) || 12,
-      true,
-    );
+    return this.social.likedPosts(id, Number(page) || 1, Number(limit) || 12, true);
   }
 }

@@ -458,14 +458,14 @@
     "openNotifications": "Open notifications"
   },
   "people": {
-    "title": "Find people",
+    "title": "search",
     "subtitle": "Search by name or email handle, then follow them.",
     "placeholder": "Search people…",
     "startTitle": "Search the community",
     "startDesc": "Type a name to find writers and readers you want to follow.",
     "noResults": "No one found",
     "noResultsDesc": "No account matches “{q}”.",
-    "navPeople": "Find people"
+    "navPeople": "search"
   },
   "settings": {
     "title": "Settings",

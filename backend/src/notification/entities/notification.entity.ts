@@ -57,11 +57,7 @@ export class Notification {
   @Column({ nullable: true })
   commentId?: string;
 
-  @ManyToOne(() => Comment, {
-    onDelete: 'CASCADE',
-    eager: true,
-    nullable: true,
-  })
+  @ManyToOne(() => Comment, { onDelete: 'CASCADE', eager: true, nullable: true })
   comment?: Comment;
 
   /** Short preview of the comment/reply text, frozen at creation time so the

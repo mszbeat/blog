@@ -327,10 +327,7 @@ export class UsersService {
     return updated;
   }
 
-  async remove(
-    id: string,
-    actor?: { id: string; role?: UserRole },
-  ): Promise<void> {
+  async remove(id: string, actor?: { id: string; role?: UserRole }): Promise<void> {
     const user = await this.findOneById(id);
     await this.usersRepo.delete({ id });
     await this.userCacheService.deleteCache(id);
@@ -366,14 +363,9 @@ export class UsersService {
       this.log.warn('Password change rejected: wrong current password', {
         userId,
       });
-      this.audit.auth(
-        'PASSWORD_CHANGE_FAILED',
-        { id: userId },
-        {},
-        {
-          reason: 'wrong_current_password',
-        },
-      );
+      this.audit.auth('PASSWORD_CHANGE_FAILED', { id: userId }, {}, {
+        reason: 'wrong_current_password',
+      });
       throw ERROR_MESSAGES.USERS.wrongPassword;
     }
     if (changePasswordDto.currentPassword === changePasswordDto.newPassword) {

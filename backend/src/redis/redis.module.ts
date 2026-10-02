@@ -25,9 +25,7 @@ export const REDIS_CLIENT = 'REDIS_CLIENT';
         const log = logger.forContext('Redis');
         client.on('connect', () => log.debug('Redis connected'));
         client.on('ready', () => log.info('Redis ready'));
-        client.on('reconnecting', (ms) =>
-          log.warn('Redis reconnecting', { delayMs: ms }),
-        );
+        client.on('reconnecting', (ms) => log.warn('Redis reconnecting', { delayMs: ms }));
         client.on('error', (err) => log.error('Redis error', { error: err }));
         client.on('close', () => log.warn('Redis connection closed'));
 

@@ -13,12 +13,21 @@
  */
 declare module '@silay/logger' {
   export type LevelName =
-    'trace' | 'debug' | 'info' | 'http' | 'warn' | 'error' | 'fatal';
+    | 'trace'
+    | 'debug'
+    | 'info'
+    | 'http'
+    | 'warn'
+    | 'error'
+    | 'fatal';
 
   export type LogLevel = LevelName | 'silent';
   export type LogFormat = 'json' | 'pretty';
   export type EnvironmentName =
-    'development' | 'test' | 'staging' | 'production';
+    | 'development'
+    | 'test'
+    | 'staging'
+    | 'production';
 
   /** Arbitrary structured fields attached to a single log entry. */
   export type LogFields = Record<string, unknown>;
@@ -129,14 +138,8 @@ declare module '@silay/logger' {
     info(message: string, fields?: LogFields): void;
     http(message: string, fields?: LogFields): void;
     warn(message: string, fields?: LogFields): void;
-    error(
-      message: string,
-      fieldsOrError?: (LogFields & { error?: unknown }) | unknown,
-    ): void;
-    fatal(
-      message: string,
-      fieldsOrError?: (LogFields & { error?: unknown }) | unknown,
-    ): void;
+    error(message: string, fieldsOrError?: (LogFields & { error?: unknown }) | unknown): void;
+    fatal(message: string, fieldsOrError?: (LogFields & { error?: unknown }) | unknown): void;
     addTransport(transport: Transport): void;
     flush(): Promise<void>;
     close(): Promise<void>;
@@ -184,10 +187,7 @@ declare module '@silay/logger' {
     skip?: (req: unknown) => boolean;
   }
 
-  export function requestLogger(
-    logger: Logger,
-    options?: RequestLoggerOptions,
-  ): any;
+  export function requestLogger(logger: Logger, options?: RequestLoggerOptions): any;
   export function errorLogger(logger: Logger): any;
 
   export function attachRedisLogging(

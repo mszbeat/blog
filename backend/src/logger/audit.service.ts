@@ -80,8 +80,7 @@ export class AuditService implements OnApplicationShutdown {
       entity: 'auth',
       entityId: actor.id,
       actorId: actor.id,
-      actorType:
-        actor.role === 'admin' ? 'admin' : actor.id ? 'user' : 'anonymous',
+      actorType: actor.role === 'admin' ? 'admin' : actor.id ? 'user' : 'anonymous',
       ip: ctx.ip,
       userAgent: ctx.userAgent,
       metadata: { email: actor.email, role: actor.role, ...metadata },

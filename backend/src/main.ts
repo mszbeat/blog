@@ -77,7 +77,7 @@ async function bootstrap() {
 bootstrap().catch((err) => {
   // Last-resort sink: if bootstrap itself fails the DI container may not exist
   // yet, so write straight to stderr and exit non-zero.
-
+  // eslint-disable-next-line no-console
   console.error('Fatal error during bootstrap', err);
   process.exit(1);
 });

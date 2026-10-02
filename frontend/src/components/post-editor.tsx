@@ -214,12 +214,46 @@ export function PostEditor({ post, mode }: { post?: Post; mode: 'create' | 'edit
   const cover = resolveMedia(coverUrl);
 
   return (
+    
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-5" noValidate>
       {formError && (
         <Alert tone="danger" title={tc('error')}>
           {formError}
         </Alert>
       )}
+
+{/* ── Sticky action bar ── */}
+      <div className="sticky top-17 z-30 flex flex-wrap items-center justify-between gap-3 rounded-card border border-line bg-surface/90 p-3 shadow-lg shadow-black/5 backdrop-blur-xl ">
+        <div className="flex items-center gap-2">
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            onClick={() => router.back()}
+          >
+            <ArrowRight className={cn('size-4', !rtl && 'rotate-180')} aria-hidden />
+            {tc('cancel')}
+          </Button>
+          {isDirty && (
+            <span className="text-xs font-medium text-amber-600">
+              {locale === 'fa' ? 'تغییرات ذخیره‌نشده' : 'Unsaved changes'}
+            </span>
+          )}
+        </div>
+
+        <div className="flex items-center gap-2">
+          {mode === 'edit' && post && (
+            <Button type="button" variant="danger" size="sm" onClick={() => toast.info(t('deleteConfirmTitle'))}>
+              <Trash2 className="size-3.5" aria-hidden />
+              {tc('delete')}
+            </Button>
+          )}
+          <Button type="submit" loading={isSubmitting} size="md">
+            {!isSubmitting && <Save className="size-4" aria-hidden />}
+            {isSubmitting ? tc('saving') : tc('save')}
+          </Button>
+        </div>
+      </div>
 
       <div className="grid gap-5 lg:grid-cols-[1fr_19rem]">
         {/* ── Main column ── */}
@@ -475,39 +509,6 @@ export function PostEditor({ post, mode }: { post?: Post; mode: 'create' | 'edit
               </p>
             </div>
           </Card>
-        </div>
-      </div>
-
-      {/* ── Sticky action bar ── */}
-      <div className="sticky bottom-4 z-30 flex flex-wrap items-center justify-between gap-3 rounded-card border border-line bg-surface/90 p-3 shadow-lg shadow-black/5 backdrop-blur-xl">
-        <div className="flex items-center gap-2">
-          <Button
-            type="button"
-            variant="ghost"
-            size="sm"
-            onClick={() => router.back()}
-          >
-            <ArrowRight className={cn('size-4', !rtl && 'rotate-180')} aria-hidden />
-            {tc('cancel')}
-          </Button>
-          {isDirty && (
-            <span className="text-xs font-medium text-amber-600">
-              {locale === 'fa' ? 'تغییرات ذخیره‌نشده' : 'Unsaved changes'}
-            </span>
-          )}
-        </div>
-
-        <div className="flex items-center gap-2">
-          {mode === 'edit' && post && (
-            <Button type="button" variant="danger" size="sm" onClick={() => toast.info(t('deleteConfirmTitle'))}>
-              <Trash2 className="size-3.5" aria-hidden />
-              {tc('delete')}
-            </Button>
-          )}
-          <Button type="submit" loading={isSubmitting} size="md">
-            {!isSubmitting && <Save className="size-4" aria-hidden />}
-            {isSubmitting ? tc('saving') : tc('save')}
-          </Button>
         </div>
       </div>
     </form>

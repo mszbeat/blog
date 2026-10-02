@@ -20,38 +20,38 @@ import { useRouter } from '@/i18n/navigation';
 import { useLocale } from 'next-intl';
 import { cn } from '@/lib/utils';
 
-// export function BackButton({
-//   fallback = '/posts',
-//   className,
-// }: {
-//   /** Where to go when there is no history to step back through. */
-//   fallback?: string;
-//   className?: string;
-// }) {
-//   const t = useTranslations('common');
-//   const history = useHistoryRouter();
-//   const router = useRouter();
-//   const rtl = useLocale() === 'fa';
+export function BackButton({
+  fallback = '/posts',
+  className,
+}: {
+  /** Where to go when there is no history to step back through. */
+  fallback?: string;
+  className?: string;
+}) {
+  const t = useTranslations('common');
+  const history = useHistoryRouter();
+  const router = useRouter();
+  const rtl = useLocale() === 'fa';
 
-//   const onClick = () => {
-//     if (typeof window !== 'undefined' && window.history.length > 1) history.back();
-//     else router.replace(fallback);
-//   };
+  const onClick = () => {
+    if (typeof window !== 'undefined' && window.history.length > 1) history.back();
+    else router.replace(fallback);
+  };
 
-//   return (
-//     <button
-//       type="button"
-//       onClick={onClick}
-//       aria-label={t('back')}
-//       title={t('back')}
-//       className={cn(
-//         'glass inline-flex size-9 shrink-0 items-center justify-center rounded-xl text-ink',
-//         'transition hover:border-brand-400 hover:text-brand-600 active:scale-95 dark:hover:text-brand-300',
-//         className,
-//       )}
-//     >
-//       {/* In RTL "back" points right, so the arrow is mirrored. */}
-//       <ArrowLeft className={cn('size-4', rtl && 'rotate-180')} aria-hidden />
-//     </button>
-//   );
-// }
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      aria-label={t('back')}
+      title={t('back')}
+      className={cn(
+        'glass inline-flex size-9 shrink-0 items-center justify-center rounded-xl text-ink',
+        'transition hover:border-brand-400 hover:text-brand-600 active:scale-95 dark:hover:text-brand-300',
+        className,
+      )}
+    >
+      {/* In RTL "back" points right, so the arrow is mirrored. */}
+      <ArrowLeft className={cn('size-4', rtl && 'rotate-180')} aria-hidden />
+    </button>
+  );
+}

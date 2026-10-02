@@ -413,7 +413,7 @@ export default function ProfilePage() {
                   onClick={() => profile.reset({ name: user.name, bio: user.bio ?? '' })}
                 >
                   <X className="size-3.5" aria-hidden />
-                  {tc('cancel')}
+                  {/* {tc('cancel')} */}
                 </Button>
               )}
             </div>

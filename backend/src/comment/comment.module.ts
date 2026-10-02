@@ -8,11 +8,7 @@ import { CommentManagementController } from './comment-management.controller';
 import { NotificationModule } from '../notification/notification.module';
 
 @Module({
-  imports: [
-    PostModule,
-    NotificationModule,
-    TypeOrmModule.forFeature([Comment]),
-  ],
+  imports: [PostModule, NotificationModule, TypeOrmModule.forFeature([Comment])],
   controllers: [CommentController, CommentManagementController],
   providers: [CommentService],
 })

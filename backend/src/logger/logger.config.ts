@@ -52,11 +52,8 @@ export function buildLoggerOptions(
     service: config.get<string>('SERVICE_NAME') ?? 'blog-api',
     environment: env,
     version: config.get<string>('SERVICE_VERSION') ?? '1.0.0',
-    level:
-      (config.get<string>('LOG_LEVEL') as any) ?? (isTest ? 'silent' : 'debug'),
-    format:
-      (config.get<string>('LOG_FORMAT') as any) ??
-      (env === 'production' ? 'json' : 'pretty'),
+    level: (config.get<string>('LOG_LEVEL') as any) ?? (isTest ? 'silent' : 'debug'),
+    format: (config.get<string>('LOG_FORMAT') as any) ?? (env === 'production' ? 'json' : 'pretty'),
     // Always console; add the rotating file sink everywhere except tests.
     transports: isTest ? ['console'] : ['console', 'file'],
     file: {
