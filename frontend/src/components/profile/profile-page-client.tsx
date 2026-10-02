@@ -86,7 +86,7 @@ export function ProfilePageClient({
       </div>
 
       {/* Zero-content state — the account exists but hasn't published. */}
-      {posts.length === 0 && tab === 'grid' && (
+      {/*posts.length === 0 && tab === 'grid' && (
         <Card className="mt-6 flex flex-col items-center gap-3 px-6 py-16 text-center">
           <span className="flex size-14 items-center justify-center rounded-2xl bg-surface-3 text-ink-3">
             <FileText className="size-6" aria-hidden />
@@ -94,7 +94,7 @@ export function ProfilePageClient({
           <h2 className="text-base font-bold text-ink">{t('noPosts')}</h2>
           <p className="max-w-sm text-sm text-ink-3">{t('noPostsDesc')}</p>
         </Card>
-      )}
+      )*/}
     </>
   );
 }
