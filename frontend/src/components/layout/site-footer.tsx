@@ -1,11 +1,12 @@
 'use client';
 
 import { useTranslations } from 'next-intl';
-import { BookOpen, Github, Heart, Rss } from 'lucide-react';
+import { Github, Heart, Rss } from 'lucide-react';
 import { Link } from '@/i18n/navigation';
-import { LocaleSwitcher } from '@/components/locale-switcher';
+import { BrandLogo } from '@/components/brand-logo';
 import { useQuery } from '@tanstack/react-query';
 import { api } from '@/lib/api';
+import { useAuth } from '@/lib/auth-context';
 import { formatNumber } from '@/lib/utils';
 import { useLocale } from 'next-intl';
 import type { Locale } from '@/lib/types';
@@ -15,6 +16,7 @@ export function SiteFooter() {
   const tc = useTranslations('common');
   const tn = useTranslations('nav');
   const locale = useLocale() as Locale;
+  const { user, isReady } = useAuth();
 
   // Footer shows the real category list — cheap query, cached app-wide.
   const { data: categories } = useQuery({
@@ -28,14 +30,19 @@ export function SiteFooter() {
   return (
     <footer className="mt-auto border-t border-line bg-surface">
       <div className="mx-auto max-w-6xl px-4 py-12 sm:px-6">
-        <div className="grid gap-10 md:grid-cols-[1.4fr_1fr_1fr_auto]">
+        <div className="grid gap-10 md:grid-cols-[1.4fr_1fr_1fr]">
           {/* Brand + description */}
           <div>
-            <Link href="/" className="inline-flex items-center gap-2.5">
-              <span className="flex size-9 items-center justify-center rounded-xl bg-gradient-to-br from-brand-500 to-accent-500 text-white shadow-sm shadow-brand-600/25">
-                <BookOpen className="size-[18px]" aria-hidden />
-              </span>
-              <span className="text-base font-extrabold tracking-tight text-ink">{tc('appName')}</span>
+            <Link href="/" className="inline-flex items-center gap-2.5 transition hover:opacity-90">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src="/favicon.svg"
+                alt=""
+                width={34}
+                height={34}
+                className="size-[34px] rounded-[10px] shadow-sm shadow-brand-600/25"
+              />
+              <BrandLogo />
             </Link>
             <p className="mt-3.5 max-w-xs text-sm leading-relaxed text-ink-3">
               {t('description')}
@@ -68,8 +75,20 @@ export function SiteFooter() {
                 { href: '/', label: tn('home') },
                 { href: '/posts', label: tn('blog') },
                 { href: '/categories', label: tn('categories') },
-                { href: '/login', label: tn('login') },
-                { href: '/register', label: tn('register') },
+                /* Auth-specific tail. Held back until the session is known so a
+                 * signed-in visitor is never offered "Login / Register" — the
+                 * same rule the hero and rail CTAs follow. */
+                ...(!isReady
+                  ? []
+                  : user
+                    ? [
+                        { href: '/dashboard', label: tn('dashboard') },
+                        { href: '/dashboard/posts/new', label: tn('newPost') },
+                      ]
+                    : [
+                        { href: '/login', label: tn('login') },
+                        { href: '/register', label: tn('register') },
+                      ]),
               ].map((l) => (
                 <li key={l.href}>
                   <Link
@@ -108,17 +127,15 @@ export function SiteFooter() {
             </ul>
           </nav>
 
-          {/* Language */}
-          <div>
-            <h3 className="text-sm font-bold text-ink">{t('language')}</h3>
-            <div className="mt-3.5">
-              <LocaleSwitcher />
-            </div>
-          </div>
+          {/* The language column used to hold a switcher; language now lives in
+              Settings (navbar), so the empty heading is gone rather than left
+              as a dead column. */}
         </div>
 
         <div className="mt-10 flex flex-col items-center justify-between gap-3 border-t border-line pt-6 sm:flex-row">
-          <p className="num-en text-xs text-ink-3">
+          {/* suppressHydrationWarning: the year is computed on both sides and can
+              legitimately differ across the New Year boundary. */}
+          <p className="num-en text-xs text-ink-3" suppressHydrationWarning>
             {t('rights', { year: formatNumber(year, locale), name: tc('appName') })}
           </p>
           <p className="inline-flex items-center gap-1.5 text-xs text-ink-3">

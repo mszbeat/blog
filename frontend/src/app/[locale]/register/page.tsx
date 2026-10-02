@@ -13,8 +13,6 @@ import { ApiError } from '@/lib/api';
 import { Button } from '@/components/ui/button';
 import { Field, Input } from '@/components/ui/form';
 import { Alert } from '@/components/ui/primitives';
-import { LocaleSwitcher } from '@/components/locale-switcher';
-import { ThemeToggle } from '@/components/theme-toggle';
 import { cn } from '@/lib/utils';
 import type { Locale } from '@/lib/types';
 
@@ -111,11 +109,6 @@ export default function RegisterPage() {
 
   return (
     <div className="mx-auto flex w-full max-w-md flex-col justify-center px-4 py-10 sm:px-6">
-      <div className="mb-6 flex items-center justify-between gap-2">
-        <LocaleSwitcher />
-        <ThemeToggle />
-      </div>
-
       <div className="rounded-card border border-line bg-surface p-6 shadow-sm sm:p-8">
         <span className="flex size-11 items-center justify-center rounded-xl bg-accent-500/10 text-accent-600">
           <UserPlus className="size-5" aria-hidden />

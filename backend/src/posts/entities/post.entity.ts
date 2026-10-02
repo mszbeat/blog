@@ -31,6 +31,17 @@ export class Post {
   @Column({ nullable: true })
   coverImage!: string;
 
+  /**
+   * Instagram-style gallery: every image attached to the post, in upload order.
+   * Rendered as a swipeable carousel on the post page; `coverImage` stays the
+   * single thumbnail used by cards and Open Graph.
+   *
+   * jsonb (not simple-array) so a URL may legally contain commas and so the
+   * column round-trips a real array instead of a joined string.
+   */
+  @Column({ type: 'jsonb', nullable: true })
+  images!: string[] | null;
+
   @Column({ default: false })
   published!: boolean;
 
@@ -50,6 +61,17 @@ export class Post {
 
   @Column({ default: 0 })
   viewCount!: number;
+
+  /**
+   * Denormalised counters, kept in sync by SocialService/CommentService.
+   * Same pattern the entity already uses for `viewCount`: a feed of N cards
+   * then costs zero extra queries instead of N COUNT(*) round trips.
+   */
+  @Column({ default: 0 })
+  likeCount!: number;
+
+  @Column({ default: 0 })
+  commentCount!: number;
 
   @CreateDateColumn()
   createdAt!: Date;

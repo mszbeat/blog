@@ -19,7 +19,7 @@ import { Field, Input, Textarea } from '@/components/ui/form';
 import { Alert, Avatar, Badge, Card, CardHeader } from '@/components/ui/primitives';
 import { PostsGrid } from '@/components/profile/posts-grid';
 import { ShareButton } from '@/components/share-button';
-import { cn, formatDate, formatNumber, gradientFor } from '@/lib/utils';
+import { cn, formatDate, formatNumber } from '@/lib/utils';
 import type { Locale } from '@/lib/types';
 
 const MAX_FILE = 5 * 1024 * 1024;
@@ -176,23 +176,12 @@ export default function ProfilePage() {
     <div className="space-y-5">
       {/* ══════════ Instagram-style identity card ══════════ */}
       <Card className="overflow-hidden !p-0">
-        <div className="relative h-28 sm:h-36">
-          <div aria-hidden className={cn('absolute inset-0 bg-gradient-to-br', gradientFor(user.id + user.name))} />
-          <div
-            aria-hidden
-            className="absolute inset-0 opacity-20"
-            style={{
-              backgroundImage: 'radial-gradient(circle at 30% 20%, #fff 1px, transparent 1px)',
-              backgroundSize: '22px 22px',
-            }}
-          />
-          <div aria-hidden className="absolute inset-0 bg-gradient-to-t from-surface-1 via-surface-1/20 to-transparent" />
-
-          {/* Quick link to the public profile */}
+        {/* No coloured banner — the identity block sits straight on the card, so
+            this page and the public profile read as one and the same layout. */}
+        <div className="flex items-center justify-end px-5 pt-4">
           <Link
             href={`/users/${user.id}`}
-            className="glass absolute top-3 inline-flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-xs font-bold text-ink transition hover:border-brand-400"
-            style={{ insetInlineEnd: '0.75rem' }}
+            className="inline-flex items-center gap-1.5 rounded-xl border border-line-strong bg-surface-2 px-3 py-1.5 text-xs font-bold text-ink-2 transition hover:border-brand-400 hover:text-brand-600 dark:hover:text-brand-300"
           >
             <Eye className="size-3.5" aria-hidden />
             {locale === 'fa' ? 'نمای عمومی' : 'Public view'}
@@ -200,10 +189,10 @@ export default function ProfilePage() {
         </div>
 
         <div className="px-5 pb-5">
-          <div className="-mt-12 flex flex-wrap items-end justify-between gap-4">
+          <div className="flex flex-wrap items-end justify-between gap-4">
             <div className="flex items-end gap-4">
               <div className="relative">
-                <Avatar src={user.avatar} name={user.name} ring className="!size-24 !text-2xl shadow-elev-3 sm:!size-28" />
+                <Avatar src={user.avatar} name={user.name} className="!size-24 !text-2xl shadow-elev-3 sm:!size-28" />
 
                 {/* Upload trigger */}
                 <button

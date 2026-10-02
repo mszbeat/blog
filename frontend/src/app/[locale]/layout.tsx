@@ -7,6 +7,10 @@ import { routing, isRtl } from '@/i18n/routing';
 import { Providers } from '@/components/providers';
 import { SiteHeader } from '@/components/layout/site-header';
 import { SiteFooter } from '@/components/layout/site-footer';
+import { NavBar } from '@/components/layout/nav-bar';
+import { AppDrawer } from '@/components/layout/app-drawer';
+import { DrawerProvider } from '@/lib/drawer-context';
+import { LiveNotificationToast } from '@/components/notifications/live-toast';
 
 /* Self-hosted by next/font — they keep working inside the offline preview. */
 const inter = Inter({
@@ -81,6 +85,7 @@ export default async function LocaleLayout({
       <body className="flex min-h-dvh flex-col bg-surface-2 font-sans text-ink antialiased">
         <NextIntlClientProvider locale={locale}>
           <Providers>
+            <DrawerProvider>
             <a
               href="#main"
               className="sr-only focus:not-sr-only focus:fixed focus:top-3 focus:z-[200] focus:rounded-lg focus:bg-brand-600 focus:px-4 focus:py-2 focus:text-sm focus:font-semibold focus:text-white"
@@ -91,11 +96,24 @@ export default async function LocaleLayout({
 
             <SiteHeader />
 
-            <main id="main" className="flex-1">
+            {/* Bottom padding clears the fixed navbar (mobile bar / desktop dock). */}
+            <main id="main" className="flex-1 pb-20 md:pb-24">
               {children}
             </main>
 
             <SiteFooter />
+
+            {/* Universal navigation: mobile bottom bar + desktop dock. */}
+            <NavBar />
+
+            {/* The shared navigation drawer (Settings lives inside). */}
+            <AppDrawer />
+            </DrawerProvider>
+
+            {/* Live activity alert — polls unread while the tab is visible and
+                pops a centred card when something new arrives. Renders nothing
+                for signed-out visitors. */}
+            <LiveNotificationToast />
           </Providers>
         </NextIntlClientProvider>
       </body>

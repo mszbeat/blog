@@ -101,7 +101,13 @@ const publicUser = (u) => {
 };
 
 /* ─────────────────────────── in-memory DB ─────────────────────────── */
-const db = { users: [], categories: [], posts: [], comments: [], sessions: new Map() };
+const db = {
+  users: [], categories: [], posts: [], comments: [], sessions: new Map(),
+  /* Social graph + activity feed (mirrors the Follow/Like/Notification entities). */
+  follows: [],        // { id, followerId, followingId, createdAt }
+  likes: [],          // { id, userId, postId, createdAt }
+  notifications: [],  // { id, userId, actorId, type, postId, commentId, excerpt, read, createdAt }
+};
 
 /** Deterministic SVG images so the offline preview still shows artwork. */
 const mediaUrl = (kind, seed) => `/api/img/${kind}/${encodeURIComponent(seed)}.svg`;
@@ -140,6 +146,7 @@ function seed() {
       id: uuid(), title, slug: slugify(title), content, excerpt,
       coverImage: cover ? mediaUrl('cover', cover) : null,
       published, authorId: author.id, viewCount: views,
+      likeCount: 0, commentCount: 0,
       createdAt: created, updatedAt: created,
       _cats: catIdx.map((i) => cats[i].id),
     };
@@ -347,7 +354,163 @@ The operator everyone overlooked. It checks a value against a type *without wide
   db.posts.forEach((post, i) => {
     post.categories = (catIds[i] ?? []).map((ci) => db.categories[ci]).filter(Boolean);
   });
+
+  seedSocial(admin, sara, ali);
 }
+
+/* ══════════════════════ social: follows / likes / notifications ══════════════════════
+ *
+ * Mirrors src/social + src/notification in the real NestJS backend:
+ *   • Follow / Like are unique pairs  → toggling is idempotent
+ *   • Post.likeCount / commentCount   → denormalised counters (like viewCount)
+ *   • Notification                    → one row per (recipient, actor, type, subject)
+ */
+
+const NOTIF_TYPES = ['follow', 'like', 'comment', 'reply'];
+
+/**
+ * Records an event for `userId`.
+ * Returns null (no row) when the actor is the recipient — nobody should be
+ * notified about their own like/comment/follow.
+ */
+function pushNotification({
+  userId, actorId, type, postId = null, commentId = null, excerpt = null, createdAt = now(),
+}) {
+  if (!userId || !actorId || userId === actorId) return null;
+
+  /* Collapse an unread duplicate instead of stacking: unliking then re-liking
+   * should refresh one row, not create a second unread badge. */
+  const dup = db.notifications.find(
+    (n) => n.userId === userId && n.actorId === actorId && n.type === type
+      && n.postId === postId && !n.read,
+  );
+  if (dup) {
+    dup.createdAt = createdAt;
+    if (excerpt) dup.excerpt = String(excerpt).slice(0, 160);
+    return dup;
+  }
+
+  const n = {
+    id: uuid(), userId, actorId, type, postId, commentId,
+    excerpt: excerpt ? String(excerpt).slice(0, 160) : null,
+    read: false, createdAt,
+  };
+  db.notifications.unshift(n);
+  return n;
+}
+
+/**
+ * Hydrates a notification for the wire.
+ * `post` is deliberately MINIMAL (id/slug/title/coverImage) — the bell only
+ * needs a thumbnail and a link, and shipping every post body with every
+ * notification row would be wasteful.
+ */
+function serializeNotification(n) {
+  const post = n.postId ? db.posts.find((p) => p.id === n.postId) : null;
+  const comment = n.commentId ? db.comments.find((c) => c.id === n.commentId) : null;
+  return {
+    ...n,
+    actor: publicUser(db.users.find((u) => u.id === n.actorId)) ?? null,
+    post: post
+      ? {
+          id: post.id, slug: post.slug, title: post.title,
+          coverImage: post.coverImage ?? null, published: post.published,
+        }
+      : null,
+    comment: comment ? { id: comment.id, content: comment.content } : null,
+  };
+}
+
+const followExists = (followerId, followingId) =>
+  db.follows.some((f) => f.followerId === followerId && f.followingId === followingId);
+const followersCount = (userId) => db.follows.filter((f) => f.followingId === userId).length;
+const followingCount = (userId) => db.follows.filter((f) => f.followerId === userId).length;
+const likesOnPost = (postId) => db.likes.filter((l) => l.postId === postId).length;
+
+/** Recompute both denormalised counters for one post. */
+function recountPost(post) {
+  post.likeCount = likesOnPost(post.id);
+  post.commentCount = db.comments.filter((c) => c.postId === post.id).length;
+}
+
+/**
+ * Mirrors OptionalJwtAuthGuard: attaches `req.user` when a valid token is
+ * present but NEVER rejects, so public endpoints can personalise their
+ * response (likedByMe / isFollowing) without locking anonymous visitors out.
+ */
+function optionalAuth(req, _res, next) {
+  const payload = verifyJwt(bearer(req), JWT_SECRET);
+  if (payload && !payload.expired && db.sessions.has(`${payload.id}:${payload.sessionId}`)) {
+    const user = db.users.find((u) => u.id === payload.id);
+    if (user) req.user = { ...user, sessionId: payload.sessionId };
+  }
+  next();
+}
+
+/** Builds the demo social graph so the UI has real data on first load. */
+function seedSocial(admin, sara, ali) {
+  const hoursAgo = (h) => new Date(Date.now() - h * 36e5).toISOString();
+
+  const addFollow = (follower, following, h) => {
+    if (followExists(follower.id, following.id)) return;
+    db.follows.push({
+      id: uuid(), followerId: follower.id, followingId: following.id, createdAt: hoursAgo(h),
+    });
+    pushNotification({
+      userId: following.id, actorId: follower.id, type: 'follow', createdAt: hoursAgo(h),
+    });
+  };
+
+  const addLike = (user, postIdx, h) => {
+    const post = db.posts[postIdx];
+    if (!post || db.likes.some((l) => l.userId === user.id && l.postId === post.id)) return;
+    db.likes.push({ id: uuid(), userId: user.id, postId: post.id, createdAt: hoursAgo(h) });
+    pushNotification({
+      userId: post.authorId, actorId: user.id, type: 'like', postId: post.id, createdAt: hoursAgo(h),
+    });
+  };
+
+  addFollow(admin, sara, 200);
+  addFollow(sara, admin, 150);
+  addFollow(ali, admin, 96);
+  addFollow(sara, ali, 72);
+  addFollow(ali, sara, 20);
+
+  // [who, post index, hours ago] — spread across the published posts.
+  [
+    [sara, 0, 90], [ali, 0, 80], [sara, 1, 70], [ali, 2, 60], [sara, 4, 50],
+    [ali, 3, 44], [sara, 5, 36], [ali, 6, 30], [sara, 7, 24], [ali, 8, 12],
+    [sara, 2, 8], [ali, 1, 5], [sara, 6, 3], [ali, 4, 2],
+  ].forEach(([u, i, h]) => addLike(u, i, h));
+
+  // Notifications for the comments that were seeded above.
+  db.comments.forEach((c) => {
+    const post = db.posts.find((p) => p.id === c.postId);
+    if (!post) return;
+    const excerpt = c.content.slice(0, 160);
+    pushNotification({
+      userId: post.authorId, actorId: c.authorId, type: 'comment',
+      postId: post.id, commentId: c.id, excerpt, createdAt: c.createdAt,
+    });
+    if (c.parentId) {
+      const parent = db.comments.find((x) => x.id === c.parentId);
+      if (parent) {
+        pushNotification({
+          userId: parent.authorId, actorId: c.authorId, type: 'reply',
+          postId: post.id, commentId: c.id, excerpt, createdAt: c.createdAt,
+        });
+      }
+    }
+  });
+
+  db.posts.forEach(recountPost);
+
+  /* Newest first, and leave only the four most recent unread so the header
+   * badge shows a realistic number rather than the entire history. */
+  db.notifications.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+  db.notifications.forEach((n, i) => { n.read = i >= 4; });
+}
+
 seed();
 
 /* ─────────────────────────── app ─────────────────────────── */
@@ -561,10 +724,18 @@ app.post('/auth/logout', requireAuth, (req, res) => {
 });
 
 /* ══════════════ POSTS ══════════════ */
-const attach = (post) => ({
+/**
+ * Shapes a post for the wire.
+ * `viewerId` is optional: when present the response carries `likedByMe` so the
+ * feed can render a filled heart without a second request per card.
+ */
+const attach = (post, viewerId = null) => ({
   ...post,
   author: publicUser(db.users.find((u) => u.id === post.authorId)) ?? null,
   categories: post.categories ?? [],
+  likeCount: post.likeCount ?? 0,
+  commentCount: post.commentCount ?? 0,
+  likedByMe: viewerId ? db.likes.some((l) => l.postId === post.id && l.userId === viewerId) : false,
 });
 
 app.post('/post', requireAuth, (req, res) => {
@@ -599,6 +770,7 @@ app.post('/post', requireAuth, (req, res) => {
     id: uuid(), title, slug, content, excerpt: excerpt ?? null,
     coverImage: coverImage ?? null, published: published ?? false,
     authorId: req.user.id, categories: chosen, viewCount: 0,
+    likeCount: 0, commentCount: 0,
     createdAt: now(), updatedAt: now(),
   };
   db.posts.unshift(post);
@@ -606,19 +778,23 @@ app.post('/post', requireAuth, (req, res) => {
 });
 
 /** GET /post — note: NO envelope, and published defaults to true. */
-app.get('/post', (req, res) => {
+app.get('/post', optionalAuth, (req, res) => {
   const page = Math.max(1, Number(req.query.page ?? 1) || 1);
   const limit = Math.max(1, Number(req.query.limit ?? 10) || 10);
   const publishedRaw = req.query.published;
   const published = publishedRaw === undefined ? true : !(publishedRaw === 'false' || publishedRaw === false);
   const category = req.query.category;
+  const author = req.query.author;
 
   let rows = db.posts.filter((p) => p.published === published);
   if (category) rows = rows.filter((p) => (p.categories ?? []).some((c) => c.slug === category));
+  // Powers the public profile's Posts tab with real server-side pagination.
+  if (author) rows = rows.filter((p) => p.authorId === author);
   rows = rows.slice().sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
 
   const total = rows.length;
-  const data = rows.slice((page - 1) * limit, page * limit).map(attach);
+  const viewerId = req.user?.id ?? null;
+  const data = rows.slice((page - 1) * limit, page * limit).map((p) => attach(p, viewerId));
   res.json({ data, meta: { total, page, limit, totalPages: Math.ceil(total / limit) || 1 } });
 });
 
@@ -634,11 +810,11 @@ app.get('/post/my', requireAuth, (req, res) => {
   res.json({ data, meta: { total, page, limit, totalPages: Math.ceil(total / limit) || 1 } });
 });
 
-app.get('/post/:slug', (req, res) => {
+app.get('/post/:slug', optionalAuth, (req, res) => {
   const post = db.posts.find((p) => p.slug === req.params.slug);
   if (!post) return httpError(res, 404, 'Post not found', null);
   post.viewCount += 1; // the real service increments on read
-  return res.json(ok('Post retrieved successfully', 'پست با موفقیت بازیابی شد', attach(post)));
+  return res.json(ok('Post retrieved successfully', 'پست با موفقیت بازیابی شد', attach(post, req.user?.id ?? null)));
 });
 
 app.patch('/post/:id', requireAuth, (req, res) => {
@@ -691,6 +867,10 @@ app.delete('/post/:id', requireAuth, (req, res) => {
   }
   db.posts.splice(idx, 1);
   db.comments = db.comments.filter((c) => c.postId !== post.id); // onDelete: CASCADE
+  // Likes cascade at the DB level, but notifications referencing this post must
+  // go too — otherwise the bell keeps rendering rows whose link 404s.
+  db.likes = db.likes.filter((l) => l.postId !== post.id);
+  db.notifications = db.notifications.filter((n) => n.postId !== post.id);
   return res.json(ok('Post deleted successfully', 'پست با موفقیت حذف شد'));
 });
 
@@ -778,6 +958,28 @@ app.post('/posts/:postId/comments', requireAuth, (req, res) => {
     postId: post.id, parentId: parentId ?? null, createdAt: now(), updatedAt: now(),
   };
   db.comments.unshift(comment);
+  recountPost(post);
+
+  /* Two distinct notification types, matching the real backend:
+   *   `reply`   → the author of the parent comment
+   *   `comment` → the author of the post
+   * pushNotification() drops the case where actor === recipient, so replying
+   * to your own comment produces nothing. */
+  const excerpt = String(content).slice(0, 160);
+  if (parentId) {
+    const parent = db.comments.find((c) => c.id === parentId);
+    if (parent) {
+      pushNotification({
+        userId: parent.authorId, actorId: req.user.id, type: 'reply',
+        postId: post.id, commentId: comment.id, excerpt,
+      });
+    }
+  }
+  pushNotification({
+    userId: post.authorId, actorId: req.user.id, type: 'comment',
+    postId: post.id, commentId: comment.id, excerpt,
+  });
+
   return res.json(ok('comment created successfuly', 'کامنت با موفقیت ساخته شد.', comment));
 });
 
@@ -825,6 +1027,8 @@ app.delete('/comments/:id', requireAuth, (req, res) => {
     });
   }
   db.comments = db.comments.filter((c) => !kill.has(c.id)); // onDelete: CASCADE
+  const owningPost = db.posts.find((p) => p.id === comment.postId);
+  if (owningPost) recountPost(owningPost);
   return res.json(ok('comment removed successfully', 'کامنت با موفقیت حذف شد.'));
 });
 
@@ -883,6 +1087,158 @@ app.patch('/users/me/password', requireAuth, (req, res) => {
   return res.json(ok('Password updated successfully', 'رمز عبور با موفقیت به‌روزرسانی شد'));
 });
 
+/* ══════════════ SOCIAL: public profile / follow / like ══════════════ */
+
+/**
+ * GET /users/:id/public — PUBLIC profile aggregate.
+ *
+ * This is the endpoint the frontend's author pages actually need. The guarded
+ * GET /users/:id below makes anonymous profile pages impossible, so this route
+ * returns user + stats + follow state in ONE call and uses optional auth so a
+ * signed-in viewer also learns `isFollowing` / `isSelf`.
+ *
+ * Declared BEFORE /users/:id so the literal segment wins.
+ */
+app.get('/users/:id/public', optionalAuth, (req, res) => {
+  const user = db.users.find((u) => u.id === req.params.id);
+  if (!user) return httpError(res, 404, 'User not found', 'کاربر یافت نشد');
+
+  const viewerId = req.user?.id ?? null;
+  const posts = db.posts.filter((p) => p.authorId === user.id && p.published);
+
+  return res.json(ok('Profile retrieved successfully', 'پروفایل با موفقیت بازیابی شد', {
+    user: publicUser(user),
+    stats: {
+      posts: posts.length,
+      views: posts.reduce((sum, p) => sum + (p.viewCount ?? 0), 0),
+      likes: posts.reduce((sum, p) => sum + (p.likeCount ?? 0), 0),
+      followers: followersCount(user.id),
+      following: followingCount(user.id),
+    },
+    isFollowing: viewerId && viewerId !== user.id ? followExists(viewerId, user.id) : false,
+    isSelf: viewerId === user.id,
+  }));
+});
+
+/** POST /users/:id/follow — idempotent; re-following just reports state. */
+app.post('/users/:id/follow', requireAuth, (req, res) => {
+  const target = db.users.find((u) => u.id === req.params.id);
+  if (!target) return httpError(res, 404, 'User not found', 'کاربر یافت نشد');
+  if (target.id === req.user.id) {
+    return httpError(res, 400, 'You cannot follow yourself', 'نمی‌توانید خودتان را دنبال کنید');
+  }
+
+  if (!followExists(req.user.id, target.id)) {
+    db.follows.push({ id: uuid(), followerId: req.user.id, followingId: target.id, createdAt: now() });
+    pushNotification({ userId: target.id, actorId: req.user.id, type: 'follow' });
+  }
+
+  return res.json(ok('User followed successfully', 'کاربر با موفقیت دنبال شد', {
+    isFollowing: true,
+    followersCount: followersCount(target.id),
+    followingCount: followingCount(req.user.id),
+  }));
+});
+
+app.delete('/users/:id/follow', requireAuth, (req, res) => {
+  const target = db.users.find((u) => u.id === req.params.id);
+  if (!target) return httpError(res, 404, 'User not found', 'کاربر یافت نشد');
+
+  db.follows = db.follows.filter(
+    (f) => !(f.followerId === req.user.id && f.followingId === target.id),
+  );
+
+  return res.json(ok('User unfollowed successfully', 'دنبال‌کردن با موفقیت لغو شد', {
+    isFollowing: false,
+    followersCount: followersCount(target.id),
+    followingCount: followingCount(req.user.id),
+  }));
+});
+
+/** Paginated edge lists. Both return raw users (no envelope) like GET /users. */
+function edgeList(req, res, sideColumn) {
+  const page = Math.max(1, Number(req.query.page ?? 1) || 1);
+  const limit = Math.max(1, Number(req.query.limit ?? 20) || 20);
+  const user = db.users.find((u) => u.id === req.params.id);
+  if (!user) return httpError(res, 404, 'User not found', 'کاربر یافت نشد');
+
+  const rows = db.follows
+    .filter((f) => f[sideColumn] === user.id)
+    .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+
+  const otherKey = sideColumn === 'followingId' ? 'followerId' : 'followingId';
+  const total = rows.length;
+  const data = rows
+    .slice((page - 1) * limit, page * limit)
+    .map((f) => publicUser(db.users.find((u) => u.id === f[otherKey])))
+    .filter(Boolean);
+
+  return res.json({ data, meta: { total, page, limit, totalPages: Math.ceil(total / limit) || 1 } });
+}
+
+app.get('/users/:id/followers', (req, res) => edgeList(req, res, 'followingId'));
+app.get('/users/:id/following', (req, res) => edgeList(req, res, 'followerId'));
+
+/** Posts a user liked — public, published only, newest like first. */
+app.get('/users/:id/likes', optionalAuth, (req, res) => {
+  const page = Math.max(1, Number(req.query.page ?? 1) || 1);
+  const limit = Math.max(1, Number(req.query.limit ?? 12) || 12);
+  const user = db.users.find((u) => u.id === req.params.id);
+  if (!user) return httpError(res, 404, 'User not found', 'کاربر یافت نشد');
+
+  const rows = db.likes
+    .filter((l) => l.userId === user.id)
+    .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
+    .map((l) => db.posts.find((p) => p.id === l.postId))
+    .filter((p) => p && p.published);
+
+  const total = rows.length;
+  const viewerId = req.user?.id ?? null;
+  const data = rows.slice((page - 1) * limit, page * limit).map((p) => attach(p, viewerId));
+  return res.json({ data, meta: { total, page, limit, totalPages: Math.ceil(total / limit) || 1 } });
+});
+
+/**
+ * POST /posts/:postId/like — TOGGLE.
+ * One button serves both like and unlike, so the client never has to know the
+ * current state before acting (optimistic UI stays trivial).
+ */
+app.post('/posts/:postId/like', requireAuth, (req, res) => {
+  const post = db.posts.find((p) => p.id === req.params.postId);
+  if (!post) return httpError(res, 404, 'Post not found', 'پست یافت نشد');
+
+  const existing = db.likes.find((l) => l.userId === req.user.id && l.postId === post.id);
+
+  if (existing) {
+    db.likes = db.likes.filter((l) => l.id !== existing.id);
+    recountPost(post);
+    return res.json(ok('Like removed successfully', 'لایک با موفقیت برداشته شد', {
+      liked: false, likeCount: post.likeCount,
+    }));
+  }
+
+  db.likes.push({ id: uuid(), userId: req.user.id, postId: post.id, createdAt: now() });
+  recountPost(post);
+  pushNotification({ userId: post.authorId, actorId: req.user.id, type: 'like', postId: post.id });
+
+  return res.json(ok('Post liked successfully', 'پست با موفقیت لایک شد', {
+    liked: true, likeCount: post.likeCount,
+  }));
+});
+
+/** Who liked a post — used by the "liked by" line under the action bar. */
+app.get('/posts/:postId/likes', (req, res) => {
+  const post = db.posts.find((p) => p.id === req.params.postId);
+  if (!post) return httpError(res, 404, 'Post not found', 'پست یافت نشد');
+  const data = db.likes
+    .filter((l) => l.postId === post.id)
+    .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
+    .slice(0, 20)
+    .map((l) => publicUser(db.users.find((u) => u.id === l.userId)))
+    .filter(Boolean);
+  return res.json(ok('Likes retrieved successfully', 'لایک‌ها بازیابی شدند', data));
+});
+
 app.get('/users/:id', requireAuth, (req, res) => {
   const user = db.users.find((u) => u.id === req.params.id);
   if (!user) return httpError(res, 404, 'User not found', 'کاربر یافت نشد');
@@ -910,8 +1266,89 @@ app.patch('/users/:id', requireAuth, (req, res) => {
 app.delete('/users/:id', requireAuth, requireRoles('admin'), (req, res) => {
   const idx = db.users.findIndex((u) => u.id === req.params.id);
   if (idx === -1) return httpError(res, 404, 'User not found', 'کاربر یافت نشد');
+  const doomed = db.users[idx].id;
   db.users.splice(idx, 1);
+  db.follows = db.follows.filter((f) => f.followerId !== doomed && f.followingId !== doomed);
+  db.likes = db.likes.filter((l) => l.userId !== doomed);
+  db.notifications = db.notifications.filter(
+    (n) => n.userId !== doomed && n.actorId !== doomed,
+  );
   return res.json(ok('User deleted successfully', 'کاربر با موفقیت حذف شد'));
+});
+
+/* ══════════════ NOTIFICATIONS ══════════════ */
+
+/**
+ * GET /notifications — paginated, hydrates actor + a MINIMAL post shape.
+ * The post is trimmed to id/slug/title/coverImage on purpose: the bell only
+ * needs a thumbnail and a link, and shipping full bodies with every row would
+ * be wasteful.
+ */
+app.get('/notifications', requireAuth, (req, res) => {
+  const page = Math.max(1, Number(req.query.page ?? 1) || 1);
+  const limit = Math.max(1, Number(req.query.limit ?? 20) || 20);
+  const unreadRaw = req.query.unread;
+  const unreadOnly = unreadRaw === 'true' || unreadRaw === true;
+  const type = req.query.type;
+
+  let rows = db.notifications.filter((n) => n.userId === req.user.id);
+  if (unreadOnly) rows = rows.filter((n) => !n.read);
+  if (type) {
+    if (!NOTIF_TYPES.includes(type)) {
+      return validationError(res, [`type must be one of the following values: ${NOTIF_TYPES.join(', ')}`]);
+    }
+    rows = rows.filter((n) => n.type === type);
+  }
+  rows = rows.slice().sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+
+  const total = rows.length;
+  const data = rows.slice((page - 1) * limit, page * limit).map(serializeNotification);
+  return res.json(ok('Notifications retrieved successfully', 'اعلان‌ها با موفقیت بازیابی شدند', {
+    data,
+    meta: { total, page, limit, totalPages: Math.ceil(total / limit) || 1 },
+  }));
+});
+
+/**
+ * GET /notifications/unread — the polled endpoint behind the header badge and
+ * the live toast. Exempt from throttling in the real backend (@SkipThrottle),
+ * because a 30s poll would otherwise consume the entire request budget.
+ */
+app.get('/notifications/unread', requireAuth, (req, res) => {
+  const mine = db.notifications.filter((n) => n.userId === req.user.id && !n.read);
+  const byType = Object.fromEntries(NOTIF_TYPES.map((t) => [t, 0]));
+  mine.forEach((n) => { byType[n.type] = (byType[n.type] ?? 0) + 1; });
+
+  return res.json(ok('Unread count retrieved successfully', 'تعداد اعلان‌های خوانده‌نشده بازیابی شد', {
+    count: mine.length,
+    byType,
+    /* Newest few, pre-hydrated: lets the toast render instantly on arrival
+     * without the client having to fire a second list request. */
+    latest: mine.slice(0, 3).map(serializeNotification),
+  }));
+});
+
+// Declared before /:id/read so "read-all" is never parsed as an id.
+app.patch('/notifications/read-all', requireAuth, (req, res) => {
+  let affected = 0;
+  db.notifications.forEach((n) => {
+    if (n.userId === req.user.id && !n.read) { n.read = true; affected += 1; }
+  });
+  return res.json(ok('All notifications marked as read', 'همهٔ اعلان‌ها خوانده‌شده شدند', { affected }));
+});
+
+app.patch('/notifications/:id/read', requireAuth, (req, res) => {
+  const n = db.notifications.find((x) => x.id === req.params.id && x.userId === req.user.id);
+  if (!n) return httpError(res, 404, 'Notification not found', 'اعلان یافت نشد');
+  n.read = true;
+  return res.json(ok('Notification marked as read', 'اعلان به‌عنوان خوانده‌شده علامت خورد', serializeNotification(n)));
+});
+
+app.delete('/notifications/:id', requireAuth, (req, res) => {
+  const idx = db.notifications.findIndex((x) => x.id === req.params.id && x.userId === req.user.id);
+  if (idx === -1) return httpError(res, 404, 'Notification not found', 'اعلان یافت نشد');
+  db.notifications.splice(idx, 1);
+  return res.json(ok('Notification deleted successfully', 'اعلان با موفقیت حذف شد'));
 });
 
 /* ══════════════ UPLOADS ══════════════ */
@@ -945,7 +1382,10 @@ app.post('/uploads/cover', requireAuth, handleUpload('cover'));
 app.get('/__mock/health', (_req, res) =>
   res.json({
     ok: true, mock: true,
-    counts: { users: db.users.length, posts: db.posts.length, categories: db.categories.length, comments: db.comments.length },
+    counts: {
+    follows: db.follows.length,
+    likes: db.likes.length,
+    notifications: db.notifications.length, users: db.users.length, posts: db.posts.length, categories: db.categories.length, comments: db.comments.length },
     sessions: db.sessions.size,
   }),
 );

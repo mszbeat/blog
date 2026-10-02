@@ -1,7 +1,7 @@
 'use client';
 
 import { useTranslations } from 'next-intl';
-import { CalendarDays, Eye, MessageCircle } from 'lucide-react';
+import { CalendarDays, Eye, Layers, MessageCircle } from 'lucide-react';
 import { Link } from '@/i18n/navigation';
 import { Avatar, Badge, Card } from '@/components/ui/primitives';
 import {
@@ -48,13 +48,24 @@ export function PostCard({
           ) : (
             <span
               className={cn(
-                'flex size-full items-center justify-center bg-gradient-to-br',
+                'flex size-full items-center justify-center',
                 gradientFor(post.slug || post.id),
               )}
             >
               <span className="px-6 text-center text-lg font-bold text-white/90 drop-shadow-sm">
                 {truncate(post.title, 48)}
               </span>
+            </span>
+          )}
+
+          {/* Gallery indicator — this post opens as a slideshow. */}
+          {(post.images?.length ?? 0) > 1 && (
+            <span
+              className="num-en absolute bottom-2 flex items-center gap-1 rounded-full bg-slate-950/65 px-2 py-0.5 text-[10px] font-bold text-white backdrop-blur-sm"
+              style={{ insetInlineEnd: '0.5rem' }}
+            >
+              <Layers className="size-2.5" aria-hidden />
+              {post.images!.length}
             </span>
           )}
 

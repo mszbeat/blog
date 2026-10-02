@@ -25,4 +25,10 @@ export class QueryPostsDto {
   @IsOptional()
   @IsString()
   category?: string;
+
+  /** Filter by author id — lets a public profile page paginate its own posts
+   *  instead of the client fetching everything and filtering in memory. */
+  @IsOptional()
+  @IsString()
+  author?: string;
 }

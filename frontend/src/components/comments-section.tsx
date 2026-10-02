@@ -1,8 +1,8 @@
 'use client';
 
-import { useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useLocale, useTranslations } from 'next-intl';
-import { CornerDownRight, MessageSquare, Pencil, Send, Trash2 } from 'lucide-react';
+import { ChevronDown, CornerDownRight, MessageSquare, Pencil, Send, Trash2 } from 'lucide-react';
 import { Link } from '@/i18n/navigation';
 import { useAuth } from '@/lib/auth-context';
 import { useToast } from '@/components/toast';
@@ -273,21 +273,63 @@ function CommentItem({
   const tc = useTranslations('common');
   const isEdited = node.updatedAt !== node.createdAt;
 
+  /** Every descendant, so the toggle can quote a true total ("12 replies")
+   *  rather than just the direct children. */
+  const replyTotal = useMemo(() => countComments(node.replies), [node.replies]);
+
+  /* Notifications deep-link to `#comment-<id>`, and that id is usually a reply.
+   * If the thread stays collapsed the anchor points at nothing, so any comment
+   * that CONTAINS the linked one opens itself on mount. */
+  const [open, setOpen] = useState(false);
+  useEffect(() => {
+    if (typeof window === 'undefined' || replyTotal === 0) return;
+    const hash = window.location.hash.replace('#', '');
+    if (!hash.startsWith('comment-')) return;
+    const target = hash.slice('comment-'.length);
+    const ids = new Set<string>();
+    const walk = (list: CommentNode[]) => list.forEach((n) => { ids.add(n.id); walk(n.replies); });
+    walk(node.replies);
+    if (ids.has(target)) setOpen(true);
+  }, [node.replies, replyTotal]);
+
   return (
     <li>
       <article
+        /* Notifications deep-link to `/posts/:slug#comment-<id>`, so every
+           thread node needs a stable anchor it can land on. */
+        id={`comment-${node.id}`}
         className={cn(
-          'group relative flex gap-3 rounded-xl p-3 transition',
+          'group relative flex gap-3 rounded-xl p-3 transition scroll-mt-28',
           editingId === node.id && 'bg-brand-500/5 ring-1 ring-brand-500/20',
+          /* Brief highlight when arriving from a notification anchor. */
+          'target:ring-2 target:ring-brand-500/35 target:bg-brand-500/5',
         )}
       >
-        <Avatar src={node.author?.avatar} name={node.author?.name} size="sm" className="mt-0.5" />
+        {node.author ? (
+          <Link href={`/users/${node.author.id}`} aria-label={node.author.name} className="shrink-0">
+            <Avatar
+              src={node.author.avatar}
+              name={node.author.name}
+              size="sm"
+              className="mt-0.5 transition hover:opacity-85"
+            />
+          </Link>
+        ) : (
+          <Avatar name={tc('anonymous')} size="sm" className="mt-0.5" />
+        )}
 
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
-            <span className="text-sm font-semibold text-ink">
-              {node.author?.name ?? tc('anonymous')}
-            </span>
+            {node.author ? (
+              <Link
+                href={`/users/${node.author.id}`}
+                className="text-sm font-semibold text-ink transition hover:text-brand-600 dark:hover:text-brand-300"
+              >
+                {node.author.name}
+              </Link>
+            ) : (
+              <span className="text-sm font-semibold text-ink">{tc('anonymous')}</span>
+            )}
             {node.author?.role === 'admin' && <Badge tone="brand">{tc('role')}</Badge>}
             <span className="num-en text-xs text-ink-3">
               {formatRelative(node.createdAt, locale)}
@@ -330,28 +372,50 @@ function CommentItem({
             )}
           </div>
 
-          {node.replies.length > 0 && (
-            <ul
-              className={cn(
-                'mt-3 space-y-1 border-line ps-4',
-                // One indent guide per level keeps deep threads readable.
-                depth < 3 && 'border-s',
-              )}
-            >
-              {node.replies.map((child) => (
-                <CommentItem
-                  key={child.id}
-                  node={child}
-                  locale={locale}
-                  depth={depth + 1}
-                  canModify={canModify}
-                  onReply={onReply}
-                  onEdit={onEdit}
-                  onDelete={onDelete}
-                  editingId={editingId}
+          {/* Replies are collapsed by default: a thread with forty replies used
+              to bury every other comment on the page. The toggle reports the
+              exact count so the reader knows what they are opening. */}
+          {replyTotal > 0 && (
+            <>
+              <button
+                type="button"
+                onClick={() => setOpen((v) => !v)}
+                aria-expanded={open}
+                aria-controls={`replies-${node.id}`}
+                className="mt-2 inline-flex items-center gap-1.5 rounded-lg px-2 py-1 text-xs font-bold text-brand-600 transition hover:bg-brand-500/8 dark:text-brand-300"
+              >
+                <ChevronDown
+                  className={cn('size-3.5 transition-transform duration-200', open && 'rotate-180')}
+                  aria-hidden
                 />
-              ))}
-            </ul>
+                {open ? t('hideReplies') : t('showReplies', { count: replyTotal })}
+              </button>
+
+              {open && (
+                <ul
+                  id={`replies-${node.id}`}
+                  className={cn(
+                    'mt-1 space-y-1 border-line ps-4',
+                    // One indent guide per level keeps deep threads readable.
+                    depth < 3 && 'border-s',
+                  )}
+                >
+                  {node.replies.map((child) => (
+                    <CommentItem
+                      key={child.id}
+                      node={child}
+                      locale={locale}
+                      depth={depth + 1}
+                      canModify={canModify}
+                      onReply={onReply}
+                      onEdit={onEdit}
+                      onDelete={onDelete}
+                      editingId={editingId}
+                    />
+                  ))}
+                </ul>
+              )}
+            </>
           )}
         </div>
       </article>

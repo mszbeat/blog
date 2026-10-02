@@ -2,7 +2,8 @@
 
 import { useLocale, useTranslations } from 'next-intl';
 import {
-  Eye, FileText, FilePlus2, FileX2, Layers, PenSquare, Settings, Shield, Users,
+  Bell, Eye, FileText, FilePlus2, FileX2, Heart, Layers, MessageCircle,
+  PenSquare, Settings, Shield, Users,
 } from 'lucide-react';
 import { Link } from '@/i18n/navigation';
 import { useAuth } from '@/lib/auth-context';
@@ -26,15 +27,18 @@ export default function DashboardOverviewPage() {
   const cards = [
     { label: t('totalPosts'), value: stats?.total ?? 0, icon: FileText, tone: 'text-brand-600 bg-brand-500/10' },
     { label: t('publishedPosts'), value: stats?.published ?? 0, icon: FilePlus2, tone: 'text-emerald-600 bg-emerald-500/10' },
-    { label: t('draftPosts'), value: stats?.drafts ?? 0, icon: FileX2, tone: 'text-amber-600 bg-amber-500/10' },
+    { label: t('draftPosts'), value: stats?.drafts ?? 0, icon: FileX2, tone: 'text-accent-600 bg-accent-500/12' },
     { label: t('totalViews'), value: stats?.views ?? 0, icon: Eye, tone: 'text-sky-600 bg-sky-500/10' },
+    // Engagement — free now that Post carries likeCount/commentCount.
+    { label: t('totalLikes'), value: stats?.likes ?? 0, icon: Heart, tone: 'text-plum-600 bg-plum-500/12' },
+    { label: t('totalComments'), value: stats?.comments ?? 0, icon: MessageCircle, tone: 'text-brand-600 bg-brand-500/10' },
   ];
 
   return (
     <div className="space-y-6">
       {/* ── Stats ── */}
       <section aria-label={t('overview')}>
-        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
           {cards.map(({ label, value, icon: Icon, tone }) => (
             <Card key={label} className="p-5">
               <div className="flex items-start justify-between gap-3">
@@ -73,9 +77,31 @@ export default function DashboardOverviewPage() {
           <QuickAction href="/dashboard/posts/new" icon={FilePlus2} label={t('writeNewPost')} primary />
           <QuickAction href="/dashboard/posts" icon={FileText} label={tn('myPosts')} />
           <QuickAction href="/dashboard/profile" icon={Settings} label={t('manageProfile')} />
+          {/* Activity inbox — follows, likes and comments on the user's work. */}
+          <QuickAction href="/notifications" icon={Bell} label={t('viewNotifications')} />
           {isAdmin && <QuickAction href="/admin/users" icon={Users} label={t('manageUsers')} />}
           {isAdmin && <QuickAction href="/admin/categories" icon={Layers} label={t('manageCategories')} />}
           {isAdmin && <QuickAction href="/admin" icon={Shield} label={tn('admin')} />}
+        </div>
+      </Card>
+
+      {/* ── Account summary ──
+          Sits ABOVE Recent posts: the reader's own identity and the shortcut to
+          editing it are more immediately useful than the list below. */}
+      <Card className="p-5">
+        <div className="flex flex-wrap items-center justify-between gap-4">
+          <div className="min-w-0">
+            <p className="text-sm font-semibold text-ink">{user?.name}</p>
+            <p className="num-en mt-0.5 truncate text-xs text-ink-3" dir="ltr">{user?.email}</p>
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="rounded-full bg-surface-3 px-2.5 py-1 text-xs font-bold text-ink-2">
+              {tu(`role${(user?.role ?? 'user').charAt(0).toUpperCase()}${(user?.role ?? 'user').slice(1)}` as 'roleAdmin')}
+            </span>
+            <Link href="/dashboard/profile">
+              <Button variant="secondary" size="sm">{t('manageProfile')}</Button>
+            </Link>
+          </div>
         </div>
       </Card>
 
@@ -114,23 +140,6 @@ export default function DashboardOverviewPage() {
         )}
       </Card>
 
-      {/* ── Account summary ── */}
-      <Card className="p-5">
-        <div className="flex flex-wrap items-center justify-between gap-4">
-          <div className="min-w-0">
-            <p className="text-sm font-semibold text-ink">{user?.name}</p>
-            <p className="num-en mt-0.5 truncate text-xs text-ink-3" dir="ltr">{user?.email}</p>
-          </div>
-          <div className="flex items-center gap-2">
-            <span className="rounded-full bg-surface-3 px-2.5 py-1 text-xs font-bold text-ink-2">
-              {tu(`role${(user?.role ?? 'user').charAt(0).toUpperCase()}${(user?.role ?? 'user').slice(1)}` as 'roleAdmin')}
-            </span>
-            <Link href="/dashboard/profile">
-              <Button variant="secondary" size="sm">{t('manageProfile')}</Button>
-            </Link>
-          </div>
-        </div>
-      </Card>
     </div>
   );
 }

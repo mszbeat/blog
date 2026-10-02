@@ -13,8 +13,10 @@ const withNextIntl = createNextIntlPlugin('./src/i18n/request.ts');
  * This completely avoids the missing CORS configuration in the NestJS app
  * (main.ts has no app.enableCors()).
  *
- * API_ORIGIN defaults to the bundled mock server (port 3000).
- * Point it at the real NestJS backend with:  API_ORIGIN=http://localhost:3000
+ * The NestJS backend listens on port 3000 (see backend/src/main.ts), so that
+ * is the default here too. `127.0.0.1` rather than `localhost` on purpose:
+ * Node 17+ resolves `localhost` to `::1` first, and a backend bound to IPv4
+ * only would then look unreachable during SSR.
  */
 const API_ORIGIN = process.env.API_ORIGIN ?? 'http://127.0.0.1:3000';
 
@@ -22,7 +24,7 @@ const nextConfig: NextConfig = {
   // The sandbox preview is served from a different host — allow it explicitly.
   allowedDevOrigins: ['*.e2b.app', 'localhost', '127.0.0.1'],
 
-  // Covers come from Cloudinary in production; allow any host in dev/mock.
+  // Covers come from Cloudinary; its host is deployment-specific, so allow any.
   images: {
     remotePatterns: [
       { protocol: 'https', hostname: '**' },

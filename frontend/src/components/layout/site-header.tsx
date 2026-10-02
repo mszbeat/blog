@@ -1,26 +1,39 @@
 'use client';
 
+/**
+ * Site header — a thin brand + bell + account strip.
+ *
+ *   • Desktop: brand · primary nav · [bell] · [account menu].
+ *   • Mobile : bell in one top corner, the menu button in the OPPOSITE corner,
+ *     brand centred. The menu button opens the shared navigation drawer.
+ *   • Settings is NOT here — it lives in the drawer (opened from the navbar's
+ *     "more" or this menu button), keeping the bar calm and deduplicated.
+ *   • Notifications exist ONLY here (the bell).
+ *   • While the session probe is in flight we render a skeleton, never a Login
+ *     button, so a signed-in user never sees a wrong state flash.
+ */
+
 import { useEffect, useRef, useState } from 'react';
 import { useTranslations } from 'next-intl';
 import {
-  AtSign, BookOpen, ChevronDown, LayoutDashboard, LogOut, Menu, PenSquare,
-  Settings, Shield, User as UserIcon, X,
+  AtSign, ChevronDown, LayoutDashboard, LogOut, Menu,
+  PenSquare, Shield, User as UserIcon,
 } from 'lucide-react';
 import { Link, usePathname } from '@/i18n/navigation';
 import { useAuth } from '@/lib/auth-context';
-import { Avatar, Badge } from '@/components/ui/primitives';
-import { Button } from '@/components/ui/button';
-import { LocaleSwitcher } from '@/components/locale-switcher';
-import { ThemeToggle } from '@/components/theme-toggle';
+import { useDrawer } from '@/lib/drawer-context';
+import { Avatar, Badge, Skeleton } from '@/components/ui/primitives';
+import { BrandLogo } from '@/components/brand-logo';
+import { NotificationBell } from '@/components/notifications/notification-bell';
 import { cn } from '@/lib/utils';
 
 export function SiteHeader() {
   const t = useTranslations('nav');
   const tc = useTranslations('common');
-  const { user, isAuthenticated, isAdmin, logout } = useAuth();
+  const { user, isAdmin, isReady, logout } = useAuth();
+  const { openDrawer } = useDrawer();
   const pathname = usePathname();
 
-  const [mobileOpen, setMobileOpen] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
@@ -38,8 +51,7 @@ export function SiteHeader() {
     return () => window.removeEventListener('scroll', onScroll);
   }, []);
 
-  // Close menus on navigation.
-  useEffect(() => { setMobileOpen(false); setMenuOpen(false); }, [pathname]);
+  useEffect(() => { setMenuOpen(false); }, [pathname]);
 
   // Close the account menu on outside click / Escape.
   useEffect(() => {
@@ -59,6 +71,12 @@ export function SiteHeader() {
   const isActive = (href: string) =>
     href === '/' ? pathname === '/' : pathname.startsWith(href);
 
+  const accountLinks = [
+    { href: `/users/${user?.id}`, icon: AtSign, label: tc('publicProfile') },
+    { href: '/dashboard', icon: LayoutDashboard, label: t('dashboard') },
+    { href: '/dashboard/posts', icon: PenSquare, label: t('myPosts') },
+  ];
+
   return (
     <header
       className={cn(
@@ -68,19 +86,22 @@ export function SiteHeader() {
           : 'border-transparent bg-surface-2/60 backdrop-blur-sm',
       )}
     >
-      <div className="mx-auto flex h-16 max-w-6xl items-center gap-3 px-4 sm:px-6">
-        {/* Brand */}
+      <div className="mx-auto flex h-16 max-w-6xl items-center gap-2 px-4 sm:px-6">
+        {/* Logo pinned to the corner of the page… */}
         <Link
           href="/"
-          className="group flex shrink-0 items-center gap-2.5 rounded-xl py-1 pe-2"
+          className="group flex shrink-0 items-center gap-2.5 rounded-xl py-1 transition hover:opacity-90"
           aria-label={tc('appName')}
         >
-          <span className="flex size-9 items-center justify-center rounded-xl bg-gradient-to-br from-brand-500 to-accent-500 text-white shadow-sm shadow-brand-600/25 transition group-hover:scale-105">
-            <BookOpen className="size-[18px]" aria-hidden />
-          </span>
-          <span className="hidden text-base font-extrabold tracking-tight text-ink sm:block">
-            {tc('appName')}
-          </span>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src="/favicon.svg"
+            alt=""
+            width={34}
+            height={34}
+            className="size-[34px] shrink-0 rounded-[10px] shadow-sm shadow-brand-600/25 transition group-hover:scale-105"
+          />
+          <BrandLogo className="hidden sm:inline-flex" />
         </Link>
 
         {/* Desktop nav */}
@@ -92,7 +113,7 @@ export function SiteHeader() {
               className={cn(
                 'rounded-lg px-3 py-2 text-sm font-medium transition',
                 isActive(l.href)
-                  ? 'bg-brand-500/10 text-brand-700 dark:text-brand-300'
+                  ? 'bg-brand-500/12 text-brand-700 dark:text-brand-300'
                   : 'text-ink-2 hover:bg-surface-3 hover:text-ink',
               )}
               aria-current={isActive(l.href) ? 'page' : undefined}
@@ -103,10 +124,11 @@ export function SiteHeader() {
         </nav>
 
         <div className="ms-auto flex items-center gap-2">
-          <LocaleSwitcher className="hidden sm:inline-flex" />
-          <ThemeToggle className="hidden sm:inline-flex" />
-
-          {isAuthenticated && user ? (
+          {/* The bell sits right beside the menu button (and beside the account
+              menu on desktop) — one clustered action corner instead of icons
+              scattered across both ends of the bar. */}
+          <NotificationBell />
+          {user ? (
             <div className="relative hidden md:block" ref={menuRef}>
               <button
                 type="button"
@@ -147,10 +169,9 @@ export function SiteHeader() {
 
                   <div className="my-1 h-px bg-line" role="separator" />
 
-                  <MenuLink href={`/users/${user.id}`} icon={<UserIcon className="size-4" />} label={tc('publicProfile')} />
-                  <MenuLink href="/dashboard" icon={<LayoutDashboard className="size-4" />} label={t('dashboard')} />
-                  <MenuLink href="/dashboard/posts" icon={<PenSquare className="size-4" />} label={t('myPosts')} />
-                  <MenuLink href="/dashboard/profile" icon={<Settings className="size-4" />} label={t('profile')} />
+                  {accountLinks.map((l) => (
+                    <MenuLink key={l.href} href={l.href} icon={<l.icon className="size-4" />} label={l.label} />
+                  ))}
                   {isAdmin && (
                     <MenuLink href="/admin" icon={<Shield className="size-4" />} label={t('admin')} />
                   )}
@@ -169,136 +190,49 @@ export function SiteHeader() {
                 </div>
               )}
             </div>
-          ) : (
+          ) : isReady ? (
             <div className="hidden items-center gap-2 md:flex">
               <Link
                 href="/login"
-                className={cn(
-                  'inline-flex h-9 items-center justify-center rounded-xl px-3.5 text-sm font-semibold',
-                  'text-ink-2 transition hover:bg-surface-3 hover:text-ink',
-                )}
+                className="inline-flex h-9 items-center justify-center rounded-xl px-3.5 text-sm font-semibold text-ink-2 transition hover:bg-surface-3 hover:text-ink"
               >
                 {t('login')}
               </Link>
               <Link
                 href="/register"
-                className={cn(
-                  'inline-flex h-9 items-center justify-center rounded-xl bg-brand-600 px-4 text-sm font-semibold',
-                  'text-white shadow-sm shadow-brand-600/25 transition hover:bg-brand-700 active:scale-[0.985]',
-                )}
+                className="satin inline-flex h-9 items-center justify-center rounded-xl px-4 text-sm font-semibold text-white shadow-brand transition active:scale-[0.985]"
               >
                 {t('register')}
               </Link>
             </div>
+          ) : (
+            /* Session probe in flight — never flash a Login button. */
+            <Skeleton className="hidden h-9 w-32 rounded-xl md:block" />
           )}
 
-          {/* Mobile hamburger */}
+          {/* Mobile: the menu button, immediately after the bell. */}
           <button
             type="button"
-            onClick={() => setMobileOpen((v) => !v)}
-            aria-expanded={mobileOpen}
+            onClick={openDrawer}
             aria-label={t('menu')}
             className="inline-flex size-9 items-center justify-center rounded-xl border border-line-strong bg-surface-2 text-ink-2 transition hover:text-ink md:hidden"
           >
-            {mobileOpen ? <X className="size-4" aria-hidden /> : <Menu className="size-4" aria-hidden />}
+            <Menu className="size-4" aria-hidden />
           </button>
         </div>
       </div>
-
-      {/* Mobile drawer */}
-      {mobileOpen && (
-        <div className="border-t border-line bg-surface md:hidden animate-fade-in">
-          <nav className="mx-auto flex max-w-6xl flex-col gap-1 p-4" aria-label="mobile">
-            {links.map((l) => (
-              <Link
-                key={l.href}
-                href={l.href}
-                className={cn(
-                  'rounded-xl px-3.5 py-2.5 text-sm font-semibold transition',
-                  isActive(l.href)
-                    ? 'bg-brand-500/10 text-brand-700 dark:text-brand-300'
-                    : 'text-ink-2 hover:bg-surface-2',
-                )}
-              >
-                {l.label}
-              </Link>
-            ))}
-
-            <div className="my-2 h-px bg-line" role="separator" />
-
-            {isAuthenticated && user ? (
-              <>
-                <div className="flex items-center gap-3 rounded-xl bg-surface-2 px-3.5 py-3">
-                  <Avatar src={user.avatar} name={user.name} size="sm" />
-                  <div className="min-w-0 flex-1">
-                    <p className="truncate text-sm font-semibold text-ink">{user.name}</p>
-                    <p className="truncate text-xs text-ink-3">{user.email}</p>
-                  </div>
-                  <Badge tone={isAdmin ? 'brand' : 'neutral'}>{user.role}</Badge>
-                </div>
-                <Link href="/dashboard" className="flex items-center gap-2.5 rounded-xl px-3.5 py-2.5 text-sm font-semibold text-ink-2 hover:bg-surface-2">
-                  <LayoutDashboard className="size-4" aria-hidden /> {t('dashboard')}
-                </Link>
-                <Link href="/dashboard/posts" className="flex items-center gap-2.5 rounded-xl px-3.5 py-2.5 text-sm font-semibold text-ink-2 hover:bg-surface-2">
-                  <PenSquare className="size-4" aria-hidden /> {t('myPosts')}
-                </Link>
-                <Link href={`/users/${user.id}`} className="flex items-center gap-2.5 rounded-xl px-3.5 py-2.5 text-sm font-semibold text-ink-2 hover:bg-surface-2">
-                  <AtSign className="size-4" aria-hidden /> {tc('publicProfile')}
-                </Link>
-                <Link href="/dashboard/profile" className="flex items-center gap-2.5 rounded-xl px-3.5 py-2.5 text-sm font-semibold text-ink-2 hover:bg-surface-2">
-                  <UserIcon className="size-4" aria-hidden /> {t('profile')}
-                </Link>
-                {isAdmin && (
-                  <Link href="/admin" className="flex items-center gap-2.5 rounded-xl px-3.5 py-2.5 text-sm font-semibold text-ink-2 hover:bg-surface-2">
-                    <Shield className="size-4" aria-hidden /> {t('admin')}
-                  </Link>
-                )}
-                <button
-                  type="button"
-                  onClick={() => void logout()}
-                  className="flex items-center gap-2.5 rounded-xl px-3.5 py-2.5 text-sm font-semibold text-rose-600 hover:bg-rose-500/10"
-                >
-                  <LogOut className="size-4" aria-hidden /> {t('logout')}
-                </button>
-              </>
-            ) : (
-              <div className="grid grid-cols-2 gap-2">
-                <Link
-                  href="/login"
-                  className="inline-flex h-10 items-center justify-center rounded-xl border border-line-strong bg-surface text-sm font-semibold text-ink transition hover:border-brand-500 hover:text-brand-600"
-                >
-                  {t('login')}
-                </Link>
-                <Link
-                  href="/register"
-                  className="inline-flex h-10 items-center justify-center rounded-xl bg-brand-600 text-sm font-semibold text-white shadow-sm shadow-brand-600/25 transition hover:bg-brand-700"
-                >
-                  {t('register')}
-                </Link>
-              </div>
-            )}
-
-            <div className="mt-2 flex items-center justify-between gap-2 rounded-xl bg-surface-2 p-2">
-              <LocaleSwitcher />
-              <ThemeToggle />
-            </div>
-          </nav>
-        </div>
-      )}
     </header>
   );
 }
 
-function MenuLink({
-  href, icon, label,
-}: { href: string; icon: React.ReactNode; label: string }) {
+function MenuLink({ href, icon, label }: { href: string; icon: React.ReactNode; label: string }) {
   return (
     <Link
       href={href}
       role="menuitem"
       className="flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-sm font-medium text-ink-2 transition hover:bg-surface-2 hover:text-ink"
     >
-      <span className="text-ink-3">{icon}</span>
+      {icon}
       {label}
     </Link>
   );

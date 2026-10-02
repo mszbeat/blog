@@ -17,11 +17,12 @@
 import type { Locale } from './types';
 import { API_BASE } from './utils';
 import type {
-  ApiErrorBody, ApiEnvelope, AuthResult, BilingualMessage, Category,
+  AdminUpdateUserPayload, ApiErrorBody, ApiEnvelope, AuthResult, BilingualMessage, Category,
   ChangePasswordPayload, Comment, CreateCategoryPayload, CreateCommentPayload,
-  CreatePostPayload, CreateUserPayload, LoginPayload, Paginated, Post,
-  PostQuery, RefreshResult, RegisterPayload, UpdateCategoryPayload,
-  UpdateCommentPayload, UpdatePostPayload, UpdateUserPayload, User,
+  CreatePostPayload, CreateUserPayload, FollowState, LikeState, LoginPayload,
+  Notification, NotificationQuery, Paginated, Post, PostQuery, PublicProfile,
+  RefreshResult, RegisterPayload, UpdateCategoryPayload, UpdateCommentPayload,
+  UpdatePostPayload, UpdateUserPayload, UnreadSummary, User,
 } from './types';
 
 /* ══════════════════ token storage ══════════════════ */
@@ -106,6 +107,39 @@ export class NetworkError extends ApiError {
   }
 }
 
+/**
+ * The request was still in flight when its budget ran out.
+ *
+ * Distinct from NetworkError so the UI can say "this is taking too long"
+ * instead of "the server is unreachable" — a large image on a slow uplink is
+ * neither a dead server nor a validation failure, and the retry affordance is
+ * different.
+ */
+export class TimeoutError extends ApiError {
+  constructor(readonly ms: number, cause?: unknown) {
+    const secs = Math.round(ms / 1000);
+    super(
+      0,
+      {
+        en: `This is taking longer than ${secs}s — the request was cancelled. Check your connection and try a smaller file.`,
+        fa: `این عملیات بیش از ${secs} ثانیه طول کشید و درخواست لغو شد. اتصال خود را بررسی کنید و فایل کوچک‌تری انتخاب کنید.`,
+      },
+      'Request timed out',
+    );
+    this.name = 'TimeoutError';
+    void cause;
+  }
+}
+
+/**
+ * Uploads get a full minute before the client gives up.
+ *
+ * A phone on 3G pushing a 6 MB photo genuinely needs this; anything shorter
+ * turns a slow-but-fine upload into a confusing error. Matches the backend's
+ * own `UPLOAD_TIMEOUT_MS` so neither side aborts the other mid-transfer.
+ */
+export const UPLOAD_TIMEOUT_MS = 60_000;
+
 /* ══════════════════ single-flight refresh ══════════════════ */
 
 let refreshInFlight: Promise<boolean> | null = null;
@@ -165,12 +199,23 @@ export interface RequestOptions extends Omit<RequestInit, 'body'> {
   body?: unknown;
   /** Attach the Bearer token. */
   auth?: boolean;
+  /**
+   * Attach the token IF one exists, but never treat a 401/expiry as fatal.
+   *
+   * For routes behind the backend's OptionalJwtAuthGuard (public profile,
+   * post list/detail): an anonymous visitor must still get a 200, and a stale
+   * token must not kick off a refresh loop on a page that works fine without
+   * it. Implies `auth: true` for header purposes and forces retryOn401 off.
+   */
+  optionalAuth?: boolean;
   /** Retry once after a token refresh on 401. Default: true when auth is set. */
   retryOn401?: boolean;
   /** Skip envelope unwrapping and return the parsed JSON as-is. */
   raw?: boolean;
   query?: Record<string, string | number | boolean | undefined | null>;
   signal?: AbortSignal;
+  /** Abort after this many ms and throw TimeoutError. No timeout by default. */
+  timeoutMs?: number;
 }
 
 function buildUrl(path: string, query?: RequestOptions['query']): string {
@@ -196,7 +241,13 @@ function unwrap<T>(json: unknown): T {
 }
 
 async function request<T>(path: string, opts: RequestOptions = {}): Promise<T> {
-  const { body, auth = false, retryOn401 = auth, raw = false, query, headers, ...rest } = opts;
+  const {
+    body, optionalAuth = false, auth = optionalAuth, raw = false, query, headers,
+    timeoutMs, signal, ...rest
+  } = opts;
+  // A public endpoint must not spin on refresh: without retryOn401 a stale
+  // token simply degrades to the anonymous response, which is still a 200.
+  const retryOn401 = opts.retryOn401 ?? (auth && !optionalAuth);
 
   const doFetch = async (attempt: number): Promise<T> => {
     const finalHeaders = new Headers(headers);
@@ -208,15 +259,34 @@ async function request<T>(path: string, opts: RequestOptions = {}): Promise<T> {
       if (token) finalHeaders.set('Authorization', `Bearer ${token}`);
     }
 
+    /* Combine the caller's signal with an optional deadline into one controller,
+     * so a caller can still cancel without losing the timeout (and vice versa). */
+    const ctl = new AbortController();
+    const timer = timeoutMs ? setTimeout(() => ctl.abort(new DOMException('timeout', 'TimeoutError')), timeoutMs) : null;
+    const onCallerAbort = () => ctl.abort(signal?.reason);
+    if (signal) {
+      if (signal.aborted) ctl.abort(signal.reason);
+      else signal.addEventListener('abort', onCallerAbort, { once: true });
+    }
+
     let res: Response;
     try {
       res = await fetch(buildUrl(path, query), {
         ...rest,
+        cache: 'no-store',
         headers: finalHeaders,
+        signal: ctl.signal,
         body: body instanceof FormData ? body : body !== undefined ? JSON.stringify(body) : undefined,
       });
     } catch (e) {
+      /* Our own deadline produced a 'TimeoutError' reason; a caller-driven abort
+       * is re-thrown untouched so React Query can treat it as a cancellation. */
+      if (ctl.signal.aborted && !signal?.aborted) throw new TimeoutError(timeoutMs ?? 0, e);
+      if (signal?.aborted) throw e;
       throw new NetworkError(e);
+    } finally {
+      if (timer) clearTimeout(timer);
+      signal?.removeEventListener('abort', onCallerAbort);
     }
 
     if (res.status === 401 && auth && retryOn401 && attempt === 0) {
@@ -314,6 +384,10 @@ export const api = {
   /** Returns a RAW array — no envelope on this route. */
   users: () => request<User[]>('/users', { auth: true, raw: true }),
 
+  /** People search for the follow flow — RAW array, auth-gated. */
+  searchUsers: (q: string, limit = 20) =>
+    request<User[]>('/users/search', { auth: true, raw: true, query: { q, limit } }),
+
   user: (id: string) => request<User>(`/users/${id}`, { auth: true }),
 
   createUser: (payload: CreateUserPayload) =>
@@ -322,22 +396,94 @@ export const api = {
   updateUser: (id: string, payload: UpdateUserPayload) =>
     request<User>(`/users/${id}`, { method: 'PATCH', auth: true, body: payload }),
 
+  /**
+   * ADMIN-ONLY management of ANY user — the sole route that accepts `email`
+   * and `role`, i.e. promote user → admin or demote admin → user.
+   *
+   * The backend keeps this on its own path with its own DTO precisely so the
+   * self-service `PATCH /users/:id` can never be talked into a role change;
+   * `forbidNonWhitelisted` rejects any field AdminUpdateUserDto does not
+   * declare, so the payload below must stay exactly this shape.
+   */
+  adminUpdateUser: (id: string, payload: AdminUpdateUserPayload) =>
+    request<User>(`/users/${id}/admin`, { method: 'PATCH', auth: true, body: payload }),
+
   deleteUser: (id: string) =>
     request<void>(`/users/${id}`, { method: 'DELETE', auth: true }),
 
   changePassword: (payload: ChangePasswordPayload) =>
     request<void>('/users/me/password', { method: 'PATCH', auth: true, body: payload }),
 
+  /* ── public profile ──
+   * GET /users/:id is behind JwtAuthGuard, so an anonymous visitor cannot read
+   * it. This aggregate endpoint is public (OptionalJwtAuthGuard) and returns
+   * the user, their stats and the viewer's follow state in ONE call.
+   */
+  publicProfile: (id: string) =>
+    request<PublicProfile>(`/users/${id}/public`, { auth: true, optionalAuth: true }),
+
+  /* ── follow ── */
+  follow: (id: string) =>
+    request<FollowState>(`/users/${id}/follow`, { method: 'POST', auth: true }),
+
+  unfollow: (id: string) =>
+    request<FollowState>(`/users/${id}/follow`, { method: 'DELETE', auth: true }),
+
+  followers: (id: string, query: { page?: number; limit?: number } = {}) =>
+    request<Paginated<User>>(`/users/${id}/followers`, { query: query as Record<string, string | number | undefined>, raw: true }),
+
+  following: (id: string, query: { page?: number; limit?: number } = {}) =>
+    request<Paginated<User>>(`/users/${id}/following`, { query: query as Record<string, string | number | undefined>, raw: true }),
+
+  /* Sending {liked} expresses intent and is idempotent. Omitting it retains
+   * backwards-compatible toggle semantics for older clients. */
+  toggleLike: (postId: string, liked?: boolean) =>
+    request<LikeState>(`/posts/${postId}/like`, { method: 'POST', auth: true, body: { liked } }),
+
+  /** Exact ids the user liked — narrow payload, owner-only. */
+  likedIds: (id: string) => request<string[]>(`/users/${id}/liked-ids`, { auth: true }),
+
+  likedPosts: (id: string, query: { page?: number; limit?: number } = {}) =>
+    request<Paginated<Post>>(`/users/${id}/likes`, { auth: true, query: query as Record<string, string | number | undefined>, raw: true }),
+
+  postLikers: (postId: string) =>
+    request<User[]>(`/posts/${postId}/likes`),
+
+  /* ── notifications ── */
+  notifications: (query: NotificationQuery = {}) =>
+    request<Paginated<Notification>>('/notifications', {
+      auth: true,
+      // Nested under `data` (unlike /post) so the envelope stays consistent.
+      query: query as Record<string, string | number | boolean | undefined>,
+    }),
+
+  /** Polled for the header badge + live toast; @SkipThrottle on the backend. */
+  unreadNotifications: () =>
+    request<UnreadSummary>('/notifications/unread', { auth: true }),
+
+  markNotificationRead: (id: string) =>
+    request<Notification>(`/notifications/${id}/read`, { method: 'PATCH', auth: true }),
+
+  markAllNotificationsRead: () =>
+    request<{ affected: number }>('/notifications/read-all', { method: 'PATCH', auth: true }),
+
+  deleteNotification: (id: string) =>
+    request<void>(`/notifications/${id}`, { method: 'DELETE', auth: true }),
+
   /* ── uploads (multipart, field name must be exactly "file") ── */
   uploadAvatar: (file: File) => {
     const fd = new FormData();
     fd.append('file', file);
-    return request<{ url: string }>('/uploads/avatar', { method: 'POST', auth: true, body: fd });
+    return request<{ url: string }>('/uploads/avatar', {
+      method: 'POST', auth: true, body: fd, timeoutMs: UPLOAD_TIMEOUT_MS,
+    });
   },
 
   uploadCover: (file: File) => {
     const fd = new FormData();
     fd.append('file', file);
-    return request<{ url: string }>('/uploads/cover', { method: 'POST', auth: true, body: fd });
+    return request<{ url: string }>('/uploads/cover', {
+      method: 'POST', auth: true, body: fd, timeoutMs: UPLOAD_TIMEOUT_MS,
+    });
   },
 };

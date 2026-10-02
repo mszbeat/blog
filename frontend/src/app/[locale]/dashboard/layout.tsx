@@ -2,7 +2,7 @@
 
 import { useLocale, useTranslations } from 'next-intl';
 import {
-  ExternalLink, LayoutDashboard, PenSquare, Settings, Shield,
+  ExternalLink, LayoutDashboard, PenSquare, Plus, Settings, Shield,
 } from 'lucide-react';
 import { Link, usePathname } from '@/i18n/navigation';
 import { AuthGuard } from '@/components/auth-guard';
@@ -73,11 +73,14 @@ function Shell({ children }: { children: React.ReactNode }) {
       </div>
 
       <div className="mt-7 grid gap-7 lg:grid-cols-[13rem_1fr]">
-        {/* Sidebar — horizontal chip row on small screens */}
+        {/* Sidebar — horizontal chip row on small screens.
+            The identity line lives INSIDE the sticky wrapper so it scrolls with
+            the menu instead of disappearing off the top of the page. */}
         <aside>
+          <div className="lg:sticky lg:top-24">
           <nav
             aria-label={locale === 'fa' ? 'منوی داشبورد' : 'Dashboard menu'}
-            className="no-scrollbar -mx-1 flex gap-1.5 overflow-x-auto px-1 lg:mx-0 lg:sticky lg:top-24 lg:flex-col lg:overflow-visible lg:px-0"
+            className="no-scrollbar -mx-1 flex gap-1.5 overflow-x-auto px-1 lg:mx-0 lg:flex-col lg:overflow-visible lg:rounded-2xl lg:border lg:border-line lg:bg-surface lg:p-2 lg:shadow-elev-1"
           >
             {links.map(({ href, label, icon: Icon, exact }) => (
               <Link
@@ -97,9 +100,26 @@ function Shell({ children }: { children: React.ReactNode }) {
             ))}
           </nav>
 
-          <p className="mt-4 hidden text-xs leading-relaxed text-ink-3 lg:block">
-            {tc('appName')} · {user?.email}
-          </p>
+            {/* Signed-in identity, pinned with the keys above it. */}
+            <div className="mt-2 hidden lg:block">
+              <div className="rounded-2xl border border-line bg-surface p-3 shadow-elev-1">
+                <p className="text-[11px] font-bold uppercase tracking-wider text-ink-3">
+                  {tc('appName')}
+                </p>
+                <p className="num-en mt-1 truncate text-xs font-semibold text-ink-2" dir="ltr" title={user?.email}>
+                  {user?.email}
+                </p>
+              </div>
+
+              <Link
+                href="/dashboard/posts/new"
+                className="mt-2 flex items-center justify-center gap-2 rounded-xl bg-brand-600 px-3 py-2.5 text-sm font-bold text-white shadow-sm shadow-brand-600/25 transition hover:bg-brand-700"
+              >
+                <Plus className="size-4" aria-hidden />
+                {tn('newPost')}
+              </Link>
+            </div>
+          </div>
         </aside>
 
         <div className="min-w-0">{children}</div>

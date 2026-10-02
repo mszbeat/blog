@@ -7,7 +7,7 @@ import {
   UseGuards,
   HttpCode,
 } from '@nestjs/common';
-import { AuthService } from './auth.service';
+import { AuthService, RequestMeta } from './auth.service';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
@@ -16,21 +16,36 @@ import { ResponseDetail } from '../common/interfaces/response';
 import { RESPONSE_MESSAGES } from '../common/constants/messages';
 import { Throttle } from '@nestjs/throttler';
 
+/**
+ * Pulls the two fields every auth audit record needs off the request.
+ * Kept as a helper so each handler stays one line and the shape cannot drift
+ * between login/register/refresh/logout.
+ */
+function metaOf(req: any): RequestMeta {
+  return { ip: req?.ip, userAgent: req?.headers?.['user-agent'] };
+}
+
 @Controller('auth')
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
   @Post('register')
-  async register(@Body() registerDto: RegisterDto): Promise<ResponseDetail> {
-    const result = await this.authService.register(registerDto);
+  async register(
+    @Body() registerDto: RegisterDto,
+    @Request() req,
+  ): Promise<ResponseDetail> {
+    const result = await this.authService.register(registerDto, metaOf(req));
     return RESPONSE_MESSAGES.AUTH.register(result);
   }
 
   @Throttle({ default: { limit: 5, ttl: 60000 } }) // محدودیت 5 درخواست در هر دقیقه
   @Post('login')
   @HttpCode(200)
-  async login(@Body() loginDto: LoginDto): Promise<ResponseDetail> {
-    const data = await this.authService.login(loginDto);
+  async login(
+    @Body() loginDto: LoginDto,
+    @Request() req,
+  ): Promise<ResponseDetail> {
+    const data = await this.authService.login(loginDto, metaOf(req));
     return RESPONSE_MESSAGES.AUTH.login(data);
   }
 
@@ -43,15 +58,11 @@ export class AuthController {
   @UseGuards(JwtRefreshAuthGuard)
   @Post('refresh')
   async refreshToken(@Request() req): Promise<ResponseDetail> {
-    const meta = {
-      ip: req.ip,
-      userAgent: req.headers['user-agent'],
-    };
     const data = await this.authService.refreshToken(
       req.user.id,
       req.user.sessionId,
       req.user.refreshToken,
-      meta,
+      metaOf(req),
     );
 
     return RESPONSE_MESSAGES.AUTH.refreshToken(data);
@@ -60,7 +71,7 @@ export class AuthController {
   @UseGuards(JwtAuthGuard)
   @Post('logout')
   async logout(@Request() req): Promise<ResponseDetail> {
-    await this.authService.logout(req.user.id, req.user.sessionId);
+    await this.authService.logout(req.user.id, req.user.sessionId, metaOf(req));
     return RESPONSE_MESSAGES.AUTH.logout;
   }
 }

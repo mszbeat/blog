@@ -45,9 +45,12 @@ export function PostEditor({ post, mode }: { post?: Post; mode: 'create' | 'edit
   const uploadCover = useUploadCover();
 
   const [coverUrl, setCoverUrl] = useState<string | null>(post?.coverImage ?? null);
+  /** Instagram-style gallery, upload order. Shown as a carousel on the post. */
+  const [images, setImages] = useState<string[]>(post?.images ?? []);
   const [formError, setFormError] = useState<string | null>(null);
   const [fileError, setFileError] = useState<string | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
+  const galleryRef = useRef<HTMLInputElement>(null);
   const [dragOver, setDragOver] = useState(false);
 
   const schema = z.object({
@@ -89,6 +92,7 @@ export function PostEditor({ post, mode }: { post?: Post; mode: 'create' | 'edit
         categories: post.categories?.map((c) => c.id) ?? [],
       });
       setCoverUrl(post.coverImage ?? null);
+      setImages(post.images ?? []);
     }
   }, [mode, post, reset]);
 
@@ -128,6 +132,43 @@ export function PostEditor({ post, mode }: { post?: Post; mode: 'create' | 'edit
     }
   };
 
+  /* ── gallery (multi-select) ── */
+  const MAX_GALLERY = 10;
+  const handleGallery = async (list: FileList | null) => {
+    if (!list || list.length === 0) return;
+    setFileError(null);
+    const files = Array.from(list);
+    if (images.length + files.length > MAX_GALLERY) {
+      setFileError(locale === 'fa' ? `حداکثر ${MAX_GALLERY} عکس در گالری` : `At most ${MAX_GALLERY} photos in the gallery`);
+      return;
+    }
+    const urls: string[] = [];
+    try {
+      for (const file of files) {
+        if (!/\.(png|jpe?g|webp)$/i.test(file.name) && !/^image\/(png|jpeg|webp)$/.test(file.type)) {
+          setFileError(locale === 'fa' ? 'فقط PNG، JPG، JPEG یا WEBP مجاز است' : 'Only PNG, JPG, JPEG or WEBP are allowed');
+          continue;
+        }
+        if (file.size > MAX_FILE) {
+          setFileError(locale === 'fa' ? 'حجم هر فایل باید کمتر از ۵ مگابایت باشد' : 'Each file must be under 5 MB');
+          continue;
+        }
+        const res = await uploadCover.mutateAsync(file);
+        urls.push(res.url);
+      }
+      if (urls.length) {
+        setImages((prev) => [...prev, ...urls]);
+        toast.success(t('gallery'));
+      }
+    } catch (e) {
+      const msg = e instanceof ApiError ? e.messageFor(locale, tc('error')) : String(e);
+      setFileError(msg);
+      toast.error(tc('error'), msg);
+    } finally {
+      if (galleryRef.current) galleryRef.current.value = '';
+    }
+  };
+
   /* ── submit ── */
   const onSubmit = async (values: Form) => {
     setFormError(null);
@@ -140,6 +181,11 @@ export function PostEditor({ post, mode }: { post?: Post; mode: 'create' | 'edit
     };
     if (values.excerpt?.trim()) payload.excerpt = values.excerpt.trim();
     if (coverUrl) payload.coverImage = coverUrl;
+    if (images.length) {
+      payload.images = images;
+      // Cards and Open Graph need a single thumbnail — fall back to slide 1.
+      if (!payload.coverImage) payload.coverImage = images[0];
+    }
     if (values.categories?.length) payload.categories = values.categories;
 
     try {
@@ -328,6 +374,53 @@ export function PostEditor({ post, mode }: { post?: Post; mode: 'create' | 'edit
                   {locale === 'fa' ? 'تغییر تصویر' : 'Replace image'}
                 </Button>
               )}
+            </div>
+          </Card>
+
+          {/* Gallery */}
+          <Card>
+            <CardHeader
+              title={t('gallery')}
+              description={t('galleryHint')}
+              icon={<ImagePlus className="size-[18px]" aria-hidden />}
+            />
+            <div className="space-y-3 p-5">
+              {images.length > 0 && (
+                <div className="grid grid-cols-3 gap-2 sm:grid-cols-4">
+                  {images.map((url, i) => (
+                    <div key={url + i} className="group relative overflow-hidden rounded-lg border border-line">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img src={resolveMedia(url) ?? url} alt="" className="aspect-square w-full object-cover" />
+                      <span className="num-en absolute top-1 rounded bg-slate-950/70 px-1.5 text-[10px] font-bold text-white" style={{ insetInlineStart: '0.25rem' }}>
+                        {i + 1}
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => setImages((prev) => prev.filter((_, j) => j !== i))}
+                        className="absolute top-1 rounded-md bg-slate-900/80 p-1 text-white opacity-0 backdrop-blur transition group-hover:opacity-100 hover:bg-rose-600 focus:opacity-100"
+                        style={{ insetInlineEnd: '0.25rem' }}
+                        aria-label={tc('delete')}
+                      >
+                        <X className="size-3" aria-hidden />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              <label className="flex cursor-pointer items-center justify-center gap-2 rounded-xl border-2 border-dashed border-line-strong bg-surface-2 px-4 py-3 text-xs font-semibold text-ink-2 transition hover:border-brand-400">
+                {uploadCover.isPending ? <Spinner className="text-brand-500" /> : <Upload className="size-4 text-ink-3" aria-hidden />}
+                {t('addImages')}
+                <input
+                  ref={galleryRef}
+                  type="file"
+                  accept={ACCEPT}
+                  multiple
+                  className="sr-only"
+                  onChange={(e) => void handleGallery(e.target.files)}
+                  disabled={uploadCover.isPending}
+                />
+              </label>
             </div>
           </Card>
 

@@ -65,6 +65,8 @@ export interface Post {
   content: string;
   excerpt?: string | null;
   coverImage?: string | null;
+  /** Instagram-style gallery, upload order. Rendered as a carousel. */
+  images?: string[] | null;
   published: boolean;
   authorId: string;
   /**
@@ -74,6 +76,14 @@ export interface Post {
   author?: User | null;
   categories?: Category[];
   viewCount: number;
+  /** Denormalised counters, kept in sync server-side. */
+  likeCount?: number;
+  commentCount?: number;
+  /**
+   * Only present when the request carried a valid access token — the route is
+   * guarded by OptionalJwtAuthGuard so anonymous visitors still get the list.
+   */
+  likedByMe?: boolean;
   createdAt: string;
   updatedAt: string;
 }
@@ -127,6 +137,7 @@ export interface CreatePostPayload {
   content: string;
   excerpt?: string;
   coverImage?: string;
+  images?: string[];
   published?: boolean;
   categories?: string[];
 }
@@ -166,6 +177,21 @@ export interface UpdateUserPayload {
   avatar?: string;
 }
 
+/**
+ * Body of `PATCH /users/:id/admin` — mirrors AdminUpdateUserDto field-for-field.
+ *
+ * This is the only endpoint that accepts `email` and a `role` change, and the
+ * backend runs `forbidNonWhitelisted`, so sending anything else (or a field it
+ * does not declare) is a 400 rather than a silent no-op.
+ */
+export interface AdminUpdateUserPayload {
+  name?: string;
+  email?: string;
+  bio?: string;
+  avatar?: string;
+  role?: UserRole;
+}
+
 export interface ChangePasswordPayload {
   currentPassword: string;
   newPassword: string;
@@ -177,6 +203,8 @@ export interface PostQuery {
   limit?: number;
   published?: boolean;
   category?: string;
+  /** Server-side author filter — powers the public profile's Posts tab. */
+  author?: string;
 }
 
 /* ───────────────────────── pagination ─────────────────────────
@@ -189,4 +217,87 @@ export interface Pagination {
   limit: number;
   totalItems: number | null;
   totalPages: number;
+}
+
+/* ───────────────────────── social graph ─────────────────────────
+ *
+ * Added to the backend for this project (see backend/src/social):
+ *   Follow  — unique (followerId, followingId)
+ *   Like    — unique (userId, postId), with Post.likeCount kept in sync
+ *
+ * Post now also carries denormalised counters (`likeCount`, `commentCount`)
+ * following the same pattern the entity already used for `viewCount`, plus a
+ * per-request `likedByMe` stamped by OptionalJwtAuthGuard.
+ */
+
+/** Follow/unfollow endpoints answer with the fresh state, not an entity. */
+export interface FollowState {
+  isFollowing: boolean;
+  followersCount: number;
+  followingCount: number;
+}
+
+export interface LikeState {
+  liked: boolean;
+  likeCount: number;
+}
+
+/** One of the four activity types the bell renders. */
+export type NotificationType = 'follow' | 'like' | 'comment' | 'reply';
+
+/**
+ * A notification as it comes over the wire: `actor` and a MINIMAL `post`
+ * (id/slug/title/coverImage) are already hydrated by the API, so the bell can
+ * render a thumbnail + link without any extra request.
+ */
+export interface Notification {
+  id: string;
+  userId: string;
+  actorId: string;
+  actor: User | null;
+  type: NotificationType;
+  postId?: string | null;
+  /** Trimmed post shape — enough for a cover thumbnail and a permalink. */
+  post?: {
+    id: string;
+    slug: string;
+    title: string;
+    coverImage?: string | null;
+    published: boolean;
+  } | null;
+  commentId?: string | null;
+  comment?: { id: string; content: string } | null;
+  /** Frozen preview of the comment text at creation time. */
+  excerpt?: string | null;
+  read: boolean;
+  createdAt: string;
+}
+
+/** GET /notifications/unread — polled for the badge and the live toast. */
+export interface UnreadSummary {
+  count: number;
+  byType: Record<NotificationType, number>;
+  /** Newest few, pre-hydrated so a toast can render immediately. */
+  latest: Notification[];
+}
+
+/** GET /users/:id/public — everything an author page needs in ONE call. */
+export interface PublicProfile {
+  user: User;
+  stats: {
+    posts: number;
+    views: number;
+    likes: number;
+    followers: number;
+    following: number;
+  };
+  isFollowing: boolean;
+  isSelf: boolean;
+}
+
+export interface NotificationQuery {
+  page?: number;
+  limit?: number;
+  unread?: boolean;
+  type?: NotificationType;
 }

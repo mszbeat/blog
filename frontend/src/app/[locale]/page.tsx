@@ -1,13 +1,14 @@
 import type { Metadata } from 'next';
 import { setRequestLocale, getTranslations } from 'next-intl/server';
 import {
-  Flame, Layers, PenSquare, Sparkles, TrendingUp,
+  Flame, Layers, Sparkles, TrendingUp, UserPlus,
 } from 'lucide-react';
 import { Link } from '@/i18n/navigation';
 import { Button } from '@/components/ui/button';
 import { Badge, EmptyState } from '@/components/ui/primitives';
 import { FeedItem } from '@/components/feed/feed-item';
 import { FeedSidebar } from '@/components/feed/feed-sidebar';
+import { WhenSignedOut } from '@/components/auth-gate';
 import { getPostsCached, getCategoriesCached } from '@/lib/server-api';
 import { formatNumber } from '@/lib/utils';
 import type { Locale } from '@/lib/types';
@@ -56,15 +57,18 @@ export default async function HomePage({ params }: Props) {
     <div className="pb-16">
       {/* ═══════════════════ Hero ═══════════════════ */}
       <section className="relative overflow-hidden border-b border-line bg-surface-2">
-        <div className="bg-grid" aria-hidden />
+        {/* Triadic mesh (iris / plum / apricot) over a faint grid — the grid
+            keeps it structured, the mesh keeps it from reading as flat grey. */}
+        <div className="bg-mesh absolute inset-0" aria-hidden />
+        <div className="bg-grid absolute inset-0 opacity-45" aria-hidden />
         <div
           aria-hidden
-          className="pointer-events-none absolute -top-28 h-72 w-72 rounded-full bg-brand-500/12 blur-3xl"
+          className="pointer-events-none absolute -top-28 h-80 w-80 rounded-full bg-brand-500/14 blur-3xl"
           style={{ insetInlineStart: '-3rem' }}
         />
         <div
           aria-hidden
-          className="pointer-events-none absolute -bottom-32 h-72 w-72 rounded-full bg-accent-500/10 blur-3xl"
+          className="pointer-events-none absolute -bottom-32 h-80 w-80 rounded-full bg-plum-500/12 blur-3xl"
           style={{ insetInlineEnd: '-2rem' }}
         />
 
@@ -80,6 +84,11 @@ export default async function HomePage({ params }: Props) {
               <h1 className="mt-4 text-[2rem] font-extrabold leading-[1.15] tracking-tight text-balance text-ink sm:text-5xl">
                 {t('heroTitle')}
               </h1>
+              {/* Thin triadic rule under the headline — picks up the mesh hues. */}
+              <div
+                aria-hidden
+                className="mt-5 h-1 w-24 rounded-full bg-gradient-to-r from-brand-500 via-plum-500 to-accent-500"
+              />
 
               <p className="mt-4 max-w-xl text-[15px] leading-loose text-pretty text-ink-2 sm:text-base">
                 {t('heroSubtitle')}
@@ -87,14 +96,17 @@ export default async function HomePage({ params }: Props) {
 
               <div className="mt-7 flex flex-wrap items-center gap-2.5">
                 <Link href="/posts" className="contents">
-                  <Button variant="primary" size="lg">{t('heroCta')}</Button>
+                  <Button variant="primary" size="lg" className="shadow-brand">{t('heroCta')}</Button>
                 </Link>
-                <Link href="/dashboard/posts/new" className="contents">
-                  <Button variant="outline" size="lg" className="gap-2">
-                    <PenSquare className="size-4" aria-hidden />
-                    {t('heroSecondary')}
-                  </Button>
-                </Link>
+                {/* "Join us" is a guest affordance — members never see it. */}
+                <WhenSignedOut>
+                  <Link href="/register" className="contents">
+                    <Button variant="outline" size="lg" className="gap-2">
+                      <UserPlus className="size-4" aria-hidden />
+                      {t('heroSecondary')}
+                    </Button>
+                  </Link>
+                </WhenSignedOut>
               </div>
 
               <dl className="num-en mt-8 flex flex-wrap items-center gap-x-8 gap-y-3">
@@ -126,10 +138,11 @@ export default async function HomePage({ params }: Props) {
       </section>
 
       {/* ═══════════════════ Feed + sidebar ═══════════════════ */}
-      <div className="mx-auto max-w-6xl px-4 sm:px-6">
-        <div className="mt-10 flex items-start gap-8">
-          {/* Main column */}
-          <main className="min-w-0 flex-1">
+      <div className="mx-auto max-w-[66rem] px-4 sm:px-6">
+        <div className="mt-10 flex items-start justify-center gap-8">
+          {/* Main column — capped to the same 36rem measure as /posts so the
+              two feeds read identically instead of one being much wider. */}
+          <main className="min-w-0 flex-1 max-w-[36rem]">
             {/* Section heading */}
             <div className="mb-5 flex flex-wrap items-end justify-between gap-3">
               <div>

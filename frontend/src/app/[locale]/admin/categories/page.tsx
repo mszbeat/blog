@@ -212,7 +212,7 @@ export default function AdminCategoriesPage() {
           <ul className="divide-y divide-line">
             {categories.map((c) => (
               <li key={c.id} className="flex items-center gap-4 p-4 transition hover:bg-surface-2">
-                <span className={cn('flex size-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br text-white', gradientFor(c.slug))}>
+                <span className={cn('flex size-10 shrink-0 items-center justify-center rounded-xl text-white', gradientFor(c.slug))}>
                   <Layers className="size-[18px]" aria-hidden />
                 </span>
 

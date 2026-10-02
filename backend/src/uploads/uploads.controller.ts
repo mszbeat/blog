@@ -57,8 +57,9 @@ export class UploadsController {
       }),
     )
     file: Express.Multer.File,
+    @Req() req,
   ): Promise<ResponseDetail> {
-    const url = await this.uploadsService.uploadCover(file);
+    const url = await this.uploadsService.uploadCover(file, req.user.id);
     return {
       message: {
         fa: 'تصویر کاور با موفقیت آپلود شد',

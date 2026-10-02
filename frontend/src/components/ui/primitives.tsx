@@ -10,7 +10,11 @@ export function Card({
   return (
     <Tag
       className={cn(
-        'rounded-card border border-line bg-surface shadow-sm shadow-black/[0.02]',
+        // `relative` is load-bearing: PostCard/FeedItem use the stretched-link
+        // pattern (`after:absolute after:inset-0`). Without a positioned card the
+        // invisible hit-area escapes to the nearest positioned ancestor — often
+        // the whole page — so clicking EMPTY MARGIN opened a post.
+        'relative rounded-card border border-line bg-surface shadow-sm shadow-black/[0.02]',
         hover && 'transition duration-200 hover:-translate-y-0.5 hover:border-line-strong hover:shadow-md hover:shadow-black/[0.06]',
         className,
       )}
@@ -86,18 +90,12 @@ export function Badge({
 /* ───────────────────────── Avatar ───────────────────────── */
 
 export function Avatar({
-  src, name, size = 'md', className, ring = false,
+  src, name, size = 'md', className,
 }: {
   src?: string | null;
   name?: string | null;
   size?: 'xs' | 'sm' | 'md' | 'lg' | 'xl';
   className?: string;
-  /**
-   * Instagram-style gradient story ring. Renders an outer gradient wrapper
-   * with a surface-coloured gap so the ring reads as a separate element
-   * rather than a border glued to the photo.
-   */
-  ring?: boolean;
 }) {
   const SIZES = {
     xs: 'size-6 text-[10px]',
@@ -114,13 +112,15 @@ export function Avatar({
         'relative inline-flex shrink-0 select-none items-center justify-center overflow-hidden rounded-full',
         'bg-gradient-to-br from-brand-500 to-accent-500 font-bold text-white',
         SIZES[size],
-        !ring && 'ring-2 ring-surface',
+        /* A quiet surface-coloured edge only — the coloured gradient "story
+           ring" was removed site-wide, so an avatar is never wrapped in colour. */
+        'ring-2 ring-surface',
         className,
       )}
       aria-hidden={!name}
     >
       {url ? (
-        // Plain <img>: cover/avatar URLs may be relative (proxied mock) or
+        // Plain <img>: cover/avatar URLs may be relative (proxied through Next) or
         // absolute (Cloudinary). next/image cannot proxy both reliably here.
         /* eslint-disable-next-line @next/next/no-img-element */
         <img src={url} alt={name ?? ''} className="size-full object-cover" loading="lazy" />
@@ -130,13 +130,7 @@ export function Avatar({
     </span>
   );
 
-  if (!ring) return inner;
-
-  return (
-    <span className="inline-flex shrink-0 rounded-full bg-gradient-to-tr from-brand-500 via-accent-500 to-orange-400 p-[3px]">
-      <span className="rounded-full bg-surface-1 p-[2px]">{inner}</span>
-    </span>
-  );
+  return inner;
 }
 
 /* ───────────────────────── Spinner ───────────────────────── */

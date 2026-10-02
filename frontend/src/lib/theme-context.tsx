@@ -21,12 +21,17 @@ function readInitial(): Theme {
 }
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
-  const [theme, setThemeState] = useState<Theme>('light');
-
-  // Apply on mount (avoids SSR/localStorage mismatch) then persist changes.
-  useEffect(() => {
-    setThemeState(readInitial());
-  }, []);
+  /* BUG FIX: this used to initialise to 'light' and then a mount effect wrote
+   * that value back to localStorage. Because switching locale remounts the
+   * whole [locale] layout (and therefore this provider), every language change
+   * silently reset a dark-mode user to light and persisted it.
+   *
+   * Reading lazily in the initializer means a remount restores the stored theme
+   * immediately, and the persisted write below only ever stores a value the
+   * user (or the system preference) actually chose. There is no hydration
+   * mismatch because the theme class is applied to <html> by an effect and by
+   * the pre-paint inline script, never rendered into the React tree. */
+  const [theme, setThemeState] = useState<Theme>(() => readInitial());
 
   useEffect(() => {
     const root = document.documentElement;

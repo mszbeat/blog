@@ -8,8 +8,9 @@
     "build": "next build",
     "start": "next start -H 0.0.0.0 -p 3001",
     "lint": "next lint",
-    "mock:api": "node mock-api/server.mjs",
-    "dev:all": "node mock-api/server.mjs & next dev --turbopack -H 0.0.0.0 -p 3001"
+    "test:social": "tsx --test tests/social-state.test.ts && tsx --tsconfig tests/tsconfig.json --test tests/social-react.test.tsx",
+    "test:api": "node tests/social-api.mjs",
+    "test:browser": "playwright test"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.9.1",
@@ -25,13 +26,18 @@
     "zod": "^3.24.1"
   },
   "devDependencies": {
+    "@playwright/test": "^1.63.0",
     "@tailwindcss/postcss": "^4.0.0",
     "@types/node": "^22.10.2",
     "@types/react": "^19.0.2",
     "@types/react-dom": "^19.0.2",
-    "express": "^4.21.2",
+    "@types/react-test-renderer": "^19.3.0",
+    "eslint": "9.39.5",
+    "eslint-config-next": "16.3.8",
     "postcss": "^8.4.49",
+    "react-test-renderer": "^19.1.0",
     "tailwindcss": "^4.0.0",
+    "tsx": "^4.23.15",
     "typescript": "^5.7.2"
   }
 }

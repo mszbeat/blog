@@ -9,17 +9,23 @@
  */
 
 import { cache } from 'react';
-import type { Category, Paginated, Post, PostQuery } from './types';
+import type { Category, Paginated, Post, PostQuery, PublicProfile } from './types';
 
 const ORIGIN = process.env.API_ORIGIN ?? 'http://127.0.0.1:3000';
 
 /**
- * Public content changes rarely, but in dev we want fresh data on every
- * request. `revalidate` is honoured in production builds.
+ * Always fresh — never cached.
+ *
+ * These payloads carry the denormalised counters (`likeCount`, `commentCount`,
+ * `viewCount`). With the previous `force-cache` + `revalidate: 60` a production
+ * build served a page whose numbers were up to a minute old, so a like survived
+ * the refresh as a filled heart (that comes from an uncached client call) while
+ * the COUNT snapped back to the cached value. Correctness of a number the user
+ * just changed beats saving one backend round trip; the pages are already
+ * `force-dynamic`, so nothing else was being reused anyway.
  */
-const IS_DEV = process.env.NODE_ENV !== 'production';
-const CACHE: RequestCache = IS_DEV ? 'no-store' : 'force-cache';
-const REVALIDATE = IS_DEV ? 0 : 60;
+const CACHE: RequestCache = 'no-store';
+const REVALIDATE = 0;
 
 interface ApiEnvelope<T> {
   message: { en: string; fa: string } | string;
@@ -90,58 +96,51 @@ export const getCategoriesCached = cache(getCategories);
  */
 export const getPostsCached = cache((query: PostQuery = {}) => getPosts(query));
 
-/* ───────────────────────── public author profile ─────────────────────────
+/* ══════════════════ public profile (authorised endpoint) ══════════════════ */
+
+/**
+ * `GET /users/:id/public` — the backend's aggregate author endpoint.
  *
- * ⚠️ Backend constraint: `GET /users/:id` sits behind JwtAuthGuard, so an
- * anonymous visitor cannot read a user directly. But `GET /post` IS public and
- * left-joins `author`, so a user with at least one published post can be
- * reconstructed entirely from public data.
+ * This replaced the old `getAuthorProfile` heuristic (fetching 100 posts and
+ * filtering client-side) as the PRIMARY source for /users/:id: it works for
+ * users with zero published posts and returns real follower/like counters.
  *
- * This keeps author pages crawlable (SSR + SEO) without touching the backend.
- * Users with zero published posts fall back to a client-side authenticated
- * fetch — see <ProfileAuthFallback />.
+ * Server Components call it unauthenticated, so `isFollowing`/`isSelf` are
+ * always false here — the client layer re-reads it with the token attached.
  */
+export const getPublicProfile = cache(async (userId: string): Promise<PublicProfile | null> => {
+  try {
+    return await serverFetch<PublicProfile>(`/users/${encodeURIComponent(userId)}/public`);
+  } catch {
+    return null;
+  }
+});
 
-export interface AuthorProfile {
-  author: Post['author'] | null;
-  posts: Post[];
-  /** True when we could not identify the user from public data at all. */
-  unresolved: boolean;
-  stats: { posts: number; views: number; published: number };
-}
-
-export const getAuthorProfile = cache(
-  async (authorId: string, pageSize = 100): Promise<AuthorProfile> => {
-    const empty = {
-      author: null,
-      posts: [],
-      unresolved: true,
-      stats: { posts: 0, views: 0, published: 0 },
-    } satisfies AuthorProfile;
-
+/** Published posts by one author, using the backend's `author` query filter. */
+export const getPostsByAuthor = cache(
+  async (userId: string, limit = 48): Promise<Post[]> => {
     try {
-      const res = await getPosts({ page: 1, limit: pageSize, published: true });
-      const all = res.data ?? [];
-      const mine = all.filter((p) => p.authorId === authorId);
-      const author = mine[0]?.author ?? null;
-
-      if (!author && mine.length === 0) return empty;
-
-      return {
-        author,
-        posts: mine,
-        unresolved: !author,
-        stats: {
-          posts: mine.length,
-          published: mine.filter((p) => p.published).length,
-          views: mine.reduce((sum, p) => sum + (p.viewCount ?? 0), 0),
-        },
-      };
+      const res = await getPosts({ author: userId, published: true, page: 1, limit });
+      return res.data ?? [];
     } catch {
-      return empty;
+      return [];
     }
   },
 );
+
+/** Everything the author page needs, fetched in parallel for SSR. */
+export interface AuthorPageData {
+  profile: PublicProfile | null;
+  posts: Post[];
+}
+
+export const getAuthorPageData = cache(async (userId: string): Promise<AuthorPageData> => {
+  const [profile, posts] = await Promise.all([
+    getPublicProfile(userId),
+    getPostsByAuthor(userId),
+  ]);
+  return { profile, posts };
+});
 
 /** True when the backend is unreachable — lets pages degrade instead of crashing. */
 export async function apiReachable(): Promise<boolean> {

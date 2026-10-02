@@ -13,15 +13,7 @@ import { ApiError } from '@/lib/api';
 import { Button } from '@/components/ui/button';
 import { Field, Input } from '@/components/ui/form';
 import { Alert } from '@/components/ui/primitives';
-import { LocaleSwitcher } from '@/components/locale-switcher';
-import { ThemeToggle } from '@/components/theme-toggle';
 import type { Locale } from '@/lib/types';
-
-const DEMO_ACCOUNTS = [
-  { email: 'admin@blog.dev', password: 'admin123', role: 'admin' },
-  { email: 'sara@blog.dev', password: 'sara1234', role: 'user' },
-  { email: 'ali@blog.dev', password: 'ali12345', role: 'user' },
-] as const;
 
 function LoginForm() {
   const locale = useLocale() as Locale;
@@ -44,7 +36,7 @@ function LoginForm() {
   });
   type Form = z.infer<typeof schema>;
 
-  const { register, handleSubmit, setValue, formState: { errors, isSubmitting } } =
+  const { register, handleSubmit, formState: { errors, isSubmitting } } =
     useForm<Form>({ resolver: zodResolver(schema), defaultValues: { email: '', password: '' } });
 
   // Already signed in → straight to the dashboard.
@@ -84,20 +76,8 @@ function LoginForm() {
     }
   };
 
-  const fillDemo = (email: string, password: string) => {
-    setValue('email', email, { shouldValidate: true });
-    setValue('password', password, { shouldValidate: true });
-    setFormError(null);
-    setFieldErrors({});
-  };
-
   return (
     <div className="mx-auto flex w-full max-w-md flex-col justify-center px-4 py-10 sm:px-6">
-      <div className="mb-6 flex items-center justify-between gap-2">
-        <LocaleSwitcher />
-        <ThemeToggle />
-      </div>
-
       <div className="rounded-card border border-line bg-surface p-6 shadow-sm sm:p-8">
         <span className="flex size-11 items-center justify-center rounded-xl bg-brand-500/10 text-brand-600 dark:text-brand-300">
           <LogIn className="size-5" aria-hidden />
@@ -168,32 +148,6 @@ function LoginForm() {
             {t('signUp')}
           </Link>
         </p>
-      </div>
-
-      {/* Demo credentials — only meaningful against the bundled mock API. */}
-      <div className="mt-5 rounded-card border border-dashed border-line-strong bg-surface-2 p-4">
-        <p className="flex items-center gap-1.5 text-xs font-bold text-ink-2">
-          <Info className="size-3.5 text-brand-500" aria-hidden />
-          {locale === 'fa' ? 'حساب‌های نمونه (Mock API)' : 'Demo accounts (mock API)'}
-        </p>
-        <div className="mt-3 space-y-1.5">
-          {DEMO_ACCOUNTS.map((a) => (
-            <button
-              key={a.email}
-              type="button"
-              onClick={() => fillDemo(a.email, a.password)}
-              className="flex w-full items-center justify-between gap-3 rounded-lg border border-line bg-surface px-3 py-2 text-start transition hover:border-brand-400"
-            >
-              <span className="min-w-0">
-                <span dir="ltr" className="block truncate font-mono text-xs text-ink">{a.email}</span>
-                <span dir="ltr" className="block truncate font-mono text-[11px] text-ink-3">{a.password}</span>
-              </span>
-              <span className="shrink-0 rounded-full bg-brand-500/10 px-2 py-0.5 text-[10px] font-bold text-brand-700 dark:text-brand-300">
-                {a.role}
-              </span>
-            </button>
-          ))}
-        </div>
       </div>
 
       <Link

@@ -66,10 +66,10 @@ export default async function CategoryDetailPage({ params }: Props) {
       <header className="relative overflow-hidden border-b border-line bg-surface">
         <div
           aria-hidden
-          className={cn('absolute inset-0 bg-gradient-to-br opacity-[0.07]', gradientFor(category.slug))}
+          className={cn('absolute inset-0 opacity-[0.07]', gradientFor(category.slug))}
         />
         <div className="relative mx-auto max-w-6xl px-4 py-12 sm:px-6 sm:py-16">
-          <span className={cn('inline-flex size-12 items-center justify-center rounded-2xl bg-gradient-to-br text-white shadow-lg', gradientFor(category.slug))}>
+          <span className={cn('inline-flex size-12 items-center justify-center rounded-2xl text-white shadow-lg', gradientFor(category.slug))}>
             <Layers className="size-6" aria-hidden />
           </span>
           <h1 className="mt-5 text-3xl font-extrabold tracking-tight text-ink sm:text-4xl">

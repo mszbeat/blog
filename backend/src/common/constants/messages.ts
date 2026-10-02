@@ -78,6 +78,13 @@ export const RESPONSE_MESSAGES = {
         en: 'Password updated successfully',
       },
     },
+    publicProfile: (data) => ({
+      message: {
+        fa: 'پروفایل با موفقیت بازیابی شد',
+        en: 'Profile retrieved successfully',
+      },
+      data,
+    }),
   },
   POSTS: {
     create: (data) => ({
@@ -87,6 +94,72 @@ export const RESPONSE_MESSAGES = {
       },
       data,
     }),
+  },
+  SOCIAL: {
+    follow: (data) => ({
+      message: {
+        en: 'User followed successfully',
+        fa: 'کاربر با موفقیت دنبال شد',
+      },
+      data,
+    }),
+    unfollow: (data) => ({
+      message: {
+        en: 'User unfollowed successfully',
+        fa: 'دنبال‌کردن با موفقیت لغو شد',
+      },
+      data,
+    }),
+    like: (data) => ({
+      message: {
+        en: 'Post liked successfully',
+        fa: 'پست با موفقیت لایک شد',
+      },
+      data,
+    }),
+    unlike: (data) => ({
+      message: {
+        en: 'Like removed successfully',
+        fa: 'لایک با موفقیت برداشته شد',
+      },
+      data,
+    }),
+  },
+  NOTIFICATIONS: {
+    findAll: (data) => ({
+      message: {
+        en: 'Notifications retrieved successfully',
+        fa: 'اعلان‌ها با موفقیت بازیابی شدند',
+      },
+      data,
+    }),
+    unread: (data) => ({
+      message: {
+        en: 'Unread count retrieved successfully',
+        fa: 'تعداد اعلان‌های خوانده‌نشده بازیابی شد',
+      },
+      data,
+    }),
+    read: (data) => ({
+      message: {
+        en: 'Notification marked as read',
+        fa: 'اعلان به‌عنوان خوانده‌شده علامت خورد',
+      },
+      data,
+    }),
+    readAll: (data) => ({
+      message: {
+        en: 'All notifications marked as read',
+        fa: 'همهٔ اعلان‌ها خوانده‌شده شدند',
+      },
+      data,
+    }),
+    remove: {
+      message: {
+        en: 'Notification deleted successfully',
+        fa: 'اعلان با موفقیت حذف شد',
+      },
+    },
   },
 };
 
@@ -155,6 +228,28 @@ export const ERROR_MESSAGES = {
       message: {
         en: 'Post already exists',
         fa: 'این پست موجود است',
+      },
+    }),
+    postNotFound: new NotFoundException({
+      message: {
+        en: 'Post not found',
+        fa: 'پست یافت نشد',
+      },
+    }),
+  },
+  SOCIAL: {
+    cannotFollowSelf: new BadRequestException({
+      message: {
+        en: 'You cannot follow yourself',
+        fa: 'نمی‌توانید خودتان را دنبال کنید',
+      },
+    }),
+  },
+  NOTIFICATIONS: {
+    notificationNotFound: new NotFoundException({
+      message: {
+        en: 'Notification not found',
+        fa: 'اعلان یافت نشد',
       },
     }),
   },

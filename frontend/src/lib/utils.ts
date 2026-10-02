@@ -212,12 +212,15 @@ export function countComments(tree: CommentNode[]): number {
 
 /* ───────────────────────── misc ───────────────────────── */
 
-/** Deterministic gradient pair, used for placeholder covers. */
-const GRADIENTS = [
-  'from-indigo-500 to-purple-500', 'from-sky-500 to-cyan-400',
-  'from-amber-500 to-rose-500', 'from-emerald-500 to-sky-500',
-  'from-violet-500 to-pink-500', 'from-teal-500 to-lime-500',
-];
+/**
+ * Deterministic cover gradient — used wherever a post/category has no image.
+ *
+ * Returns ONE of the `.grad-1 … .grad-6` classes defined in the COLOR CENTER
+ * of globals.css. The colours themselves live there, not here: this function
+ * only picks which of the six palette pairs a given seed gets, so re-theming
+ * the site never means editing TypeScript.
+ */
+const GRADIENTS = ['grad-1', 'grad-2', 'grad-3', 'grad-4', 'grad-5', 'grad-6'];
 
 export function gradientFor(seed: string): string {
   let h = 0;

@@ -1,6 +1,6 @@
 {
   "common": {
-    "appName": "Blog",
+    "appName": "Zlog",
     "tagline": "Write, read, think",
     "loading": "Loading…",
     "error": "Error",
@@ -61,7 +61,16 @@
     "followers": "Followers",
     "following": "Following",
     "soon": "soon",
-    "publicProfile": "Public profile"
+    "publicProfile": "Public profile",
+    "likes": "Likes",
+    "like": "Like",
+    "liked": "Liked",
+    "unlike": "Unlike",
+    "postsCount": "Posts",
+    "viewsCount": "Views",
+    "you": "You",
+    "loadingMore": "Loading…",
+    "noChanges": "Nothing to save"
   },
   "nav": {
     "home": "Home",
@@ -78,7 +87,9 @@
     "newPost": "New post",
     "menu": "Menu",
     "users": "Users",
-    "manageCategories": "Manage categories"
+    "manageCategories": "Manage categories",
+    "notifications": "Notifications",
+    "settings": "Settings"
   },
   "auth": {
     "loginTitle": "Welcome back",
@@ -173,7 +184,17 @@
     "seeMore": "See more",
     "seeLess": "See less",
     "apiDown": "Could not reach the API",
-    "apiDownHint": "Start the backend on API_ORIGIN and reload."
+    "apiDownHint": "Start the backend on API_ORIGIN and reload.",
+    "like": "Like",
+    "liked": "Liked",
+    "likesCount": "Likes",
+    "commentsCount": "Comments",
+    "editInline": "Edit post",
+    "editInlineHint": "You are the author of this post",
+    "likedBy": "Liked by",
+    "gallery": "Gallery",
+    "galleryHint": "Add up to 10 photos. They appear as a swipeable slideshow on the post page.",
+    "addImages": "Add photos"
   },
   "comments": {
     "title": "Comments",
@@ -198,7 +219,9 @@
     "edited": "edited",
     "loadFailed": "Failed to load comments",
     "postComment": "Submit",
-    "maxLengthHint": "Maximum 1000 characters"
+    "maxLengthHint": "Maximum 1000 characters",
+    "showReplies": "Show {count, plural, one {# reply} other {# replies}}",
+    "hideReplies": "Hide replies"
   },
   "categories": {
     "title": "Categories",
@@ -241,11 +264,15 @@
     "adminOnly": "This section is for administrators only.",
     "createdSuccess": "User created",
     "deletedSuccess": "User deleted",
-    "totalUsers": "Total users"
+    "totalUsers": "Total users",
+    "updatedSuccess": "User updated",
+    "roleChangeHint": "Takes effect on their next request",
+    "selfDemotionWarning": "You are editing your own account and removing the admin role — you will immediately lose access to this panel.",
+    "followsYou": "Follows you"
   },
   "dashboard": {
     "title": "Dashboard",
-    "welcome": "Hi {name} 👋",
+    "welcome": "Hi {name}",
     "welcomeSub": "An overview of your activity",
     "overview": "Overview",
     "totalPosts": "Total posts",
@@ -265,7 +292,12 @@
       "posts": "Posts",
       "profile": "Profile",
       "admin": "Admin"
-    }
+    },
+    "totalLikes": "Total likes",
+    "totalComments": "Total comments",
+    "engagement": "Engagement",
+    "notifications": "Notifications",
+    "viewNotifications": "View notifications"
   },
   "profile": {
     "title": "My profile",
@@ -318,7 +350,28 @@
     "pwNote": "Changing your password does not revoke the current token, but sign out of other devices for safety.",
     "follow": "Follow",
     "followSoon": "Coming soon — the backend has no follow endpoint",
-    "noBioShort": "No bio yet."
+    "noBioShort": "No bio yet.",
+    "following": "Following",
+    "unfollow": "Unfollow",
+    "followed": "Followed",
+    "unfollowed": "Unfollowed",
+    "tabPosts": "Posts",
+    "tabLikes": "Likes",
+    "tabFollowers": "Followers",
+    "tabFollowing": "Following",
+    "tabAbout": "About",
+    "noLikes": "Hasn't liked any posts yet",
+    "noLikesHint": "Posts this user likes will show up here.",
+    "noFollowers": "No followers yet",
+    "noFollowing": "Isn't following anyone yet",
+    "statPosts": "Posts",
+    "statViews": "Views",
+    "statLikes": "Likes",
+    "statFollowers": "Followers",
+    "statFollowing": "Following",
+    "profileNotFound": "User not found",
+    "profileNotFoundDesc": "This account may have been deleted, or the id is invalid.",
+    "editPost": "Edit this post"
   },
   "errors": {
     "generic": "Something went wrong. Please try again.",
@@ -368,6 +421,85 @@
   "sidebar": {
     "mostRead": "Most read",
     "activeWriters": "Active writers",
-    "publishFirst": "Publish your first post"
+    "publishFirst": "Publish your first post",
+    "joinTitle": "Join us",
+    "joinDesc": "Join the writers in a few seconds"
+  },
+  "notifications": {
+    "title": "Notifications",
+    "pageTitle": "Notifications",
+    "pageDesc": "Whenever someone follows you, likes your post or leaves a comment, you'll hear about it here.",
+    "viewAll": "View all",
+    "markAllRead": "Mark all read",
+    "markedAll": "All notifications marked as read",
+    "empty": "No notifications yet",
+    "emptyHint": "When someone follows you, likes your post or leaves a comment, it shows up here.",
+    "someone": "Someone",
+    "delete": "Delete notification",
+    "deleted": "Notification deleted",
+    "dismiss": "Dismiss",
+    "andMore": "{count, plural, one {and # more} other {and # more}}",
+    "followedYou": "started following you",
+    "likedYourPost": "liked your post",
+    "commentedOnYourPost": "commented on your post",
+    "repliedToYourComment": "replied to your comment",
+    "types": {
+      "follow": "Follows",
+      "like": "Likes",
+      "comment": "Comments",
+      "reply": "Replies"
+    },
+    "filterAll": "All",
+    "filterUnread": "Unread",
+    "unreadCount": "{count} unread",
+    "noResults": "Nothing in this filter",
+    "noResultsHint": "Try a different filter, or view every notification.",
+    "liveTitle": "New notification",
+    "openNotifications": "Open notifications"
+  },
+  "people": {
+    "title": "Find people",
+    "subtitle": "Search by name or email handle, then follow them.",
+    "placeholder": "Search people…",
+    "startTitle": "Search the community",
+    "startDesc": "Type a name to find writers and readers you want to follow.",
+    "noResults": "No one found",
+    "noResultsDesc": "No account matches “{q}”.",
+    "navPeople": "Find people"
+  },
+  "settings": {
+    "title": "Settings",
+    "language": "Language",
+    "langFa": "فارسی",
+    "langEn": "English",
+    "theme": "Theme",
+    "light": "Light",
+    "dark": "Dark",
+    "reduceMotion": "Reduce motion",
+    "reduceMotionDesc": "Turns off animations and transitions.",
+    "palette": "Colour palette",
+    "paletteDesc": "A live swatch of every colour in the site, next to its code"
+  },
+  "palette": {
+    "title": "Colour palette",
+    "subtitle": "A live swatch of every colour, next to its name and value",
+    "hint": "These values are read live from the COLOR CENTER in globals.css — change a colour there and it shows up here immediately. Switch the theme to compare both modes. Click any value to copy it.",
+    "copy": "Copy colour",
+    "theme": "Theme",
+    "light": "Light",
+    "dark": "Dark",
+    "groups": {
+      "brand": "1) Brand",
+      "accent": "2) Accent",
+      "plum": "3) Third hue — plum (likes, notifications)",
+      "semantic": "4) Semantic — danger / success / warning / info",
+      "surface": "5) Surfaces — paper and cards",
+      "ink": "5) Ink — text",
+      "line": "5) Lines and separators",
+      "extra": "7) Helpers — text on brand, satin sheen",
+      "recipe": "7) Colour recipes — gradients and glass",
+      "cover": "8) Cover gradients — posts and categories",
+      "shadow": "6) Shadows"
+    }
   }
 }

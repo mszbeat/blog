@@ -27,6 +27,13 @@ export class CreatePostDto {
   @IsOptional()
   coverImage?: string;
 
+  /** Gallery images (upload order). Capped client- and server-side. */
+  @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  @MaxLength(2048, { each: true })
+  images?: string[];
+
   @IsBoolean()
   @IsOptional()
   published?: boolean;

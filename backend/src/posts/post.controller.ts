@@ -17,6 +17,7 @@ import { RESPONSE_MESSAGES } from '../common/constants/messages';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { ResponseDetail } from '../common/interfaces/response';
 import { QueryPostsDto } from './dto/query-posts.dto';
+import { OptionalJwtAuthGuard } from '../auth/guards/optional-jwt-auth.guard';
 
 @Controller('post')
 export class PostController {
@@ -32,9 +33,14 @@ export class PostController {
     return RESPONSE_MESSAGES.POSTS.create(post);
   }
 
+  /**
+   * OptionalJwtAuthGuard: anonymous visitors still get the full list, while a
+   * signed-in visitor additionally receives `likedByMe` per post.
+   */
+  @UseGuards(OptionalJwtAuthGuard)
   @Get()
-  findAll(@Query() query: QueryPostsDto) {
-    return this.postService.findAll(query);
+  findAll(@Query() query: QueryPostsDto, @Request() req) {
+    return this.postService.findAll(query, req.user?.id ?? null);
   }
 
   @Get('my')
@@ -43,9 +49,13 @@ export class PostController {
     return this.postService.findMyPosts(req.user.id, query);
   }
 
+  @UseGuards(OptionalJwtAuthGuard)
   @Get(':slug')
-  async findBySlug(@Param('slug') slug: string): Promise<ResponseDetail> {
-    const post = await this.postService.findBySlug(slug);
+  async findBySlug(
+    @Param('slug') slug: string,
+    @Request() req,
+  ): Promise<ResponseDetail> {
+    const post = await this.postService.findBySlug(slug, req.user?.id ?? null);
     return {
       message: {
         fa: 'پست با موفقیت بازیابی شد',

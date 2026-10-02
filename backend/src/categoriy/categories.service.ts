@@ -11,19 +11,26 @@ import { CreateCategoryDto } from './dto/create-category.dto';
 import { UpdateCategoryDto } from './dto/update-category.dto';
 import { slugify } from '../common/utilities/slug.util';
 import { ERROR_MESSAGES } from '../common/constants/messages';
+import { AppLoggerService } from '../logger/app-logger.service';
 
 @Injectable()
 export class CategoryService {
   constructor(
     @InjectRepository(Category)
     private categoriesRepo: Repository<Category>,
+    private readonly logger: AppLoggerService,
   ) {}
+
+  private readonly log = this.logger.forContext('CategoryService');
 
   async create(createCategoryDto: CreateCategoryDto): Promise<Category> {
     const existing = await this.categoriesRepo.exist({
       where: { name: createCategoryDto.name },
     });
     if (existing) {
+      this.log.warn('Category create rejected: duplicate name', {
+        name: createCategoryDto.name,
+      });
       throw ERROR_MESSAGES.CATEGORIES.categoryAlreadyExists;
     }
 
@@ -34,7 +41,9 @@ export class CategoryService {
       slug,
     });
 
-    return this.categoriesRepo.save(category);
+    const saved = await this.categoriesRepo.save(category);
+    this.log.info('Category created', { id: saved.id, slug: saved.slug });
+    return saved;
   }
 
   findAll(): Promise<Category[]> {
@@ -80,13 +89,29 @@ export class CategoryService {
       category.slug = await this.generateUniqueSlug(updateCategoryDto.name);
     }
 
+    const previousSlug = category.slug;
     Object.assign(category, updateCategoryDto);
-    return this.categoriesRepo.save(category);
+    const saved = await this.categoriesRepo.save(category);
+
+    /* Slug changes are worth recording on their own: every stored post URL and
+     * every cached category link carries the old slug, so a rename is the kind
+     * of change that is invisible until links start 404ing. */
+    if (previousSlug !== saved.slug) {
+      this.log.info('Category slug changed', {
+        id: saved.id,
+        from: previousSlug,
+        to: saved.slug,
+      });
+    } else {
+      this.log.debug('Category updated', { id: saved.id });
+    }
+    return saved;
   }
 
   async remove(id: string): Promise<void> {
     const category = await this.findOne(id);
     await this.categoriesRepo.remove(category);
+    this.log.info('Category deleted', { id, slug: category.slug });
   }
 
   private async generateUniqueSlug(name: string): Promise<string> {

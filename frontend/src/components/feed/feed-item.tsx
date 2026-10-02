@@ -1,13 +1,13 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useLocale, useTranslations } from 'next-intl';
-import {
-  CalendarDays, ChevronDown, Eye, MessageCircle, Share2,
-} from 'lucide-react';
+import { CalendarDays, ChevronDown, Eye, Layers, MessageCircle } from 'lucide-react';
 import { Link } from '@/i18n/navigation';
 import { Avatar, Badge } from '@/components/ui/primitives';
 import { ShareButton } from '@/components/share-button';
+import { LikeButton } from '@/components/social/like-button';
+import { usePostSocial } from '@/lib/social-store';
 import {
   cn, formatDate, formatNumber, formatRelative, gradientFor,
   readingMinutes, resolveMedia, truncate,
@@ -28,10 +28,11 @@ const PREVIEW_CHARS = 320;
  *   → full-bleed cover
  *   → stats + action bar
  *
- * NOTE on comment counts: the API has no batch endpoint, and the real backend
- * rate-limits to 10 requests/minute globally — fetching comments for every
- * card would instantly 429. So the action bar links to the post instead of
- * showing a live count.
+ * Counters: the post list now carries denormalised `likeCount` /
+ * `commentCount` (added to the entity for exactly this reason), so the action
+ * bar shows real numbers with ONE request for the whole page. The old design
+ * had to link out instead, because per-card comment fetches instantly hit the
+ * global throttle.
  */
 export function FeedItem({
   post, locale, variant = 'full',
@@ -50,7 +51,19 @@ export function FeedItem({
   const tc = useTranslations('common');
   const tu = useTranslations('users');
   const [expanded, setExpanded] = useState(false);
+  const [hydrated, setHydrated] = useState(false);
+  useEffect(() => { setHydrated(true); }, []);
   const compact = variant === 'compact';
+
+  /* Live counters: this card is server-rendered, so `post.commentCount` is a
+   * frozen snapshot. Reading the shared store means a comment posted on the
+   * article page — or a like made anywhere — updates this card in the same tick. */
+  /* This card only RENDERS the comment count, so that is the only field it
+   * seeds. Claiming `liked`/`likeCount` here too is what made the store
+   * oscillate against the like button (the card's anonymous snapshot says
+   * false, the button's liked-id set says true) and spun React into
+   * "Maximum update depth exceeded". */
+  const social = usePostSocial(post.id, 'card', { commentCount: post.commentCount ?? 0 });
 
   const cover = resolveMedia(post.coverImage);
   const mins = readingMinutes(post.content ?? '');
@@ -62,14 +75,12 @@ export function FeedItem({
   const shown = expanded || !needsClamp ? plain : `${plain.slice(0, limit).trimEnd()}…`;
 
   return (
-    <article className="card card-hover group overflow-hidden animate-fade-up">
+    <article className="card card-hover group relative overflow-hidden animate-fade-up">
       {/* ── Author row ── */}
       <header className="flex items-start gap-3 p-4 pb-3 sm:p-5 sm:pb-3.5">
         {author ? (
           <Link href={`/users/${author.id}`} className="shrink-0" aria-label={author.name}>
-            <span className="avatar-ring avatar-ring-static block">
-              <Avatar src={author.avatar} name={author.name} size="md" className="ring-2 ring-surface" />
-            </span>
+            <Avatar src={author.avatar} name={author.name} size="md"  />
           </Link>
         ) : (
           <span className="shrink-0">
@@ -100,7 +111,7 @@ export function FeedItem({
 
           <p className="num-en mt-0.5 flex items-center gap-1.5 text-xs text-ink-3">
             <span title={formatDate(post.createdAt, locale, { dateStyle: 'full' })}>
-              {formatRelative(post.createdAt, locale)}
+              {hydrated ? formatRelative(post.createdAt, locale) : formatDate(post.createdAt, locale)}
             </span>
             <span aria-hidden>·</span>
             <span className="inline-flex items-center gap-1">
@@ -131,7 +142,7 @@ export function FeedItem({
         <h2 className="text-lg font-extrabold leading-snug text-ink sm:text-xl">
           <Link
             href={`/posts/${post.slug}`}
-            className="transition after:absolute after:inset-x-0 after:top-0 after:h-24 group-hover:text-brand-600 dark:group-hover:text-brand-300"
+            className="transition group-hover:text-brand-600 dark:group-hover:text-brand-300"
           >
             {post.title || tc('untitled')}
           </Link>
@@ -171,7 +182,7 @@ export function FeedItem({
       {/* ── Cover ── */}
       <Link
         href={`/posts/${post.slug}`}
-        className="mt-3.5 block overflow-hidden border-y border-line bg-surface-3"
+        className="relative mt-3.5 block overflow-hidden border-y border-line bg-surface-3"
         tabIndex={-1}
         aria-hidden
       >
@@ -184,29 +195,52 @@ export function FeedItem({
             className="max-h-[32rem] w-full object-cover transition duration-500 group-hover:scale-[1.015]"
           />
         ) : (
-          <span className={cn('flex w-full items-center justify-center bg-gradient-to-br', compact ? 'h-32' : 'h-40 sm:h-48', gradientFor(post.slug || post.id))}>
+          <span className={cn('flex w-full items-center justify-center', compact ? 'h-32' : 'h-40 sm:h-48', gradientFor(post.slug || post.id))}>
             <span className="px-8 text-center text-lg font-bold text-white/90 drop-shadow-sm">
               {truncate(post.title, 52)}
             </span>
           </span>
         )}
+        {/* Gallery indicator — this post opens as a slideshow. */}
+        {(post.images?.length ?? 0) > 1 && (
+          <span
+            className="num-en absolute bottom-2 flex items-center gap-1 rounded-full bg-slate-950/65 px-2 py-0.5 text-[10px] font-bold text-white backdrop-blur-sm"
+            style={{ insetInlineEnd: '0.5rem' }}
+          >
+            <Layers className="size-2.5" aria-hidden />
+            {post.images!.length}
+          </span>
+        )}
       </Link>
 
-      {/* ── Stats ── */}
-      <div className="flex items-center justify-between gap-3 px-4 pt-3 text-xs text-ink-3 sm:px-5">
+      {/* ── Stats ─ */}
+      <div className="flex flex-wrap items-center gap-x-4 gap-y-1 px-4 pt-3 text-xs text-ink-3 sm:px-5">
         <span className="num-en inline-flex items-center gap-1.5">
           <Eye className="size-3.5" aria-hidden />
           {formatNumber(post.viewCount ?? 0, locale)} {tc('views')}
         </span>
-        <span className="num-en">
+        <span className="num-en inline-flex items-center gap-1.5">
+          <MessageCircle className="size-3.5" aria-hidden />
+          {formatNumber(social.commentCount, locale)} {tc('comments')}
+        </span>
+        <span className="num-en ms-auto">
           {formatNumber(mins, locale)} {tc('minRead')}
         </span>
       </div>
 
       {/* ── Action bar ── */}
       <div className="mt-2 flex items-center gap-1 border-t border-line px-2 py-1.5 sm:px-3">
+        {/* Optimistic like — `likedByMe` arrives on the post itself, so an
+            anonymous visitor sees an unlit heart and is routed to /login. */}
+        <LikeButton
+          postId={post.id}
+          initialLiked={!!post.likedByMe}
+          initialCount={post.likeCount ?? 0}
+        />
+
         <Link href={`/posts/${post.slug}#comments`} className="feed-action flex-1 justify-center">
           <MessageCircle className="size-[18px]" aria-hidden />
+          <span className="num-en">{formatNumber(social.commentCount, locale)}</span>
           <span className="hidden sm:inline">{tc('comments')}</span>
         </Link>
 

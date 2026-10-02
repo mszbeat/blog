@@ -57,7 +57,7 @@ export default async function PostsPage({ params, searchParams }: Props) {
   const activeCategory = categories.find((c) => c.slug === category) ?? null;
 
   return (
-    <div className="mx-auto max-w-6xl px-4 py-8 sm:px-6 sm:py-10">
+    <div className="mx-auto max-w-[66rem] px-4 py-8 sm:px-6 sm:py-10">
       {/* ── Page heading ── */}
       <header className="mb-6">
         <div className="flex flex-wrap items-center gap-2.5">
@@ -113,8 +113,8 @@ export default async function PostsPage({ params, searchParams }: Props) {
       )}
 
       {/* ── Feed + rail ── */}
-      <div className="flex items-start gap-8">
-        <main className="min-w-0 flex-1">
+      <div className="flex items-start justify-center gap-8">
+        <main className="min-w-0 flex-1 max-w-[36rem]">
           {apiDown ? (
             <div className="card px-6 py-16 text-center">
               <p className="text-sm font-semibold text-ink">

@@ -11,16 +11,25 @@ import { CategoriesModule } from './categoriy/categories.module';
 import { CommentModule } from './comment/comment.module';
 import { UploadsModule } from './uploads/uploads.module';
 import { CloudinaryModule } from './cloudinary/cloudinary.module';
+import { SocialModule } from './social/social.module';
+import { NotificationModule } from './notification/notification.module';
 import { ThrottlerModule } from '@nestjs/throttler/dist/throttler.module';
 import { APP_GUARD } from '@nestjs/core';
 import { ThrottlerGuard } from '@nestjs/throttler';
+import { LoggerModule } from './logger/logger.module';
 
 @Module({
   imports: [
+    // Global logging infrastructure — must be first so every other module can
+    // inject AppLoggerService/AuditService during its own construction.
+    LoggerModule,
     ThrottlerModule.forRoot([
       {
-        ttl: 60,
-        limit: 10,
+        // Was ttl:60 / limit:10 — far too strict for a social feed: a single
+        // page render plus a notification poll exhausts it instantly.
+        // Endpoints that are polled on a timer use @SkipThrottle() instead.
+        ttl: 60_000,
+        limit: 120,
       },
     ]),
     ConfigModule.forRoot({
@@ -47,6 +56,8 @@ import { ThrottlerGuard } from '@nestjs/throttler';
     CommentModule,
     UploadsModule,
     CloudinaryModule,
+    SocialModule,
+    NotificationModule,
   ],
   controllers: [AppController],
   providers: [

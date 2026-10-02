@@ -1,4 +1,19 @@
+import type { Metadata } from 'next';
 import './globals.css';
+
+/**
+ * Favicon set. `public/favicon.svg` is the Z monogram on the iris→plum tile:
+ * at tab-strip size a full wordmark is unreadable, so the icon carries only the
+ * signature Z, while `public/logo.svg` keeps the complete "Zlog" wordmark.
+ */
+export const metadata: Metadata = {
+  icons: {
+    icon: [
+      { url: '/favicon.svg', type: 'image/svg+xml' },
+    ],
+    apple: [{ url: '/logo.svg', type: 'image/svg+xml' }],
+  },
+};
 
 /**
  * Root layout.

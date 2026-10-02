@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
+  <defs>
+    <linearGradient id="t" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#6d5ae6"/><stop offset="0.55" stop-color="#8b78f0"/><stop offset="1" stop-color="#d94f9d"/>
+    </linearGradient>
+    <linearGradient id="z" x1="0" y1="0" x2="0.6" y2="1">
+      <stop offset="0" stop-color="#fcd27a"/><stop offset="1" stop-color="#e79a2b"/>
+    </linearGradient>
+  </defs>
+  <rect x="2" y="2" width="60" height="60" rx="15" fill="url(#t)"/>
+  <rect x="2.75" y="2.75" width="58.5" height="58.5" rx="14.25" fill="none" stroke="#ffffff" stroke-opacity="0.22" stroke-width="1.25"/>
+  <!-- Monogram only: at 16px a full wordmark is unreadable, so the tab icon
+       carries the signature Z by itself. -->
+  <text x="32" y="46" text-anchor="middle" font-family="Inter, ui-sans-serif, system-ui, sans-serif" font-size="40" font-weight="800" letter-spacing="-1" fill="url(#z)">Z</text>
+</svg>

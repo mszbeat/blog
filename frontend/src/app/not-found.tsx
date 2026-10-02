@@ -6,6 +6,11 @@ import Link from 'next/link';
  * Deliberately NOT a redirect: redirecting to a locale path that also fails to
  * match would loop. This renders a self-contained bilingual 404 instead — it
  * has no access to the [locale] layout, so translations and fonts are inlined.
+ *
+ * COLOURS: every value here is a `var(--…)` from the COLOR CENTER at the top of
+ * globals.css (which the root layout imports, so the tokens exist on this page
+ * too). It used to hardcode the old indigo palette, which made the 404 the one
+ * page that did not follow a re-theme.
  */
 export default function RootNotFound() {
   return (
@@ -17,8 +22,8 @@ export default function RootNotFound() {
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          background: '#f7f8fc',
-          color: '#10131c',
+          background: 'var(--surface-2)',
+          color: 'var(--ink)',
           fontFamily: 'ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif',
           padding: '1.5rem',
         }}
@@ -32,11 +37,11 @@ export default function RootNotFound() {
               width: '4.5rem',
               height: '4.5rem',
               borderRadius: '1.25rem',
-              background: 'linear-gradient(135deg,#6366f1,#14b8a6)',
-              color: '#fff',
+              backgroundImage: 'var(--grad-satin)',
+              color: 'var(--on-brand)',
               fontSize: '1.5rem',
               fontWeight: 800,
-              boxShadow: '0 12px 28px rgba(99,102,241,.28)',
+              boxShadow: 'var(--elev-brand)',
             }}
           >
             404
@@ -45,14 +50,14 @@ export default function RootNotFound() {
           <h1 style={{ marginTop: '1.75rem', fontSize: '1.5rem', fontWeight: 800 }}>
             صفحه پیدا نشد
           </h1>
-          <p style={{ marginTop: '.5rem', color: '#4b5163', lineHeight: 1.9, fontSize: '.9rem' }}>
+          <p style={{ marginTop: '.5rem', color: 'var(--ink-2)', lineHeight: 1.9, fontSize: '.9rem' }}>
             آدرسی که وارد کرده‌اید معتبر نیست.
           </p>
 
           <h2 dir="ltr" style={{ marginTop: '2rem', fontSize: '1rem', fontWeight: 700 }}>
             Page not found
           </h2>
-          <p dir="ltr" style={{ marginTop: '.35rem', color: '#4b5163', fontSize: '.85rem' }}>
+          <p dir="ltr" style={{ marginTop: '.35rem', color: 'var(--ink-2)', fontSize: '.85rem' }}>
             The address you entered is not valid.
           </p>
 
@@ -61,8 +66,9 @@ export default function RootNotFound() {
               href="/fa"
               style={{
                 display: 'inline-flex', alignItems: 'center', height: '2.6rem', padding: '0 1.25rem',
-                borderRadius: '.75rem', background: '#4f46e5', color: '#fff',
+                borderRadius: '.75rem', backgroundImage: 'var(--grad-satin)', color: 'var(--on-brand)',
                 fontSize: '.875rem', fontWeight: 600, textDecoration: 'none',
+                boxShadow: 'var(--elev-brand)',
               }}
             >
               خانه
@@ -72,7 +78,8 @@ export default function RootNotFound() {
               dir="ltr"
               style={{
                 display: 'inline-flex', alignItems: 'center', height: '2.6rem', padding: '0 1.25rem',
-                borderRadius: '.75rem', border: '1px solid #d3d8e6', background: '#fff', color: '#10131c',
+                borderRadius: '.75rem', border: '1px solid var(--line-strong)',
+                background: 'var(--surface)', color: 'var(--ink)',
                 fontSize: '.875rem', fontWeight: 600, textDecoration: 'none',
               }}
             >

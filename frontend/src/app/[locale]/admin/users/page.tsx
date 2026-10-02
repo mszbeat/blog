@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from 'react';
 import { useLocale, useTranslations } from 'next-intl';
-import { Search, ShieldCheck, Trash2, UserPlus, Users } from 'lucide-react';
+import { Pencil, Search, ShieldCheck, Trash2, UserPlus, Users } from 'lucide-react';
 import { useAuth } from '@/lib/auth-context';
 import { useToast } from '@/components/toast';
 import { ApiError } from '@/lib/api';
@@ -15,6 +15,7 @@ import {
 import { Pagination } from '@/components/ui/pagination';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { CreateUserDialog } from '@/components/admin/create-user-dialog';
+import { EditUserDialog } from '@/components/admin/edit-user-dialog';
 import { formatDate, formatNumber } from '@/lib/utils';
 import type { Locale, User, UserRole } from '@/lib/types';
 
@@ -35,6 +36,8 @@ export default function AdminUsersPage() {
   const [page, setPage] = useState(1);
   const [pendingDelete, setPendingDelete] = useState<User | null>(null);
   const [createOpen, setCreateOpen] = useState(false);
+  /** Row currently open in the edit dialog (name/email/bio/role). */
+  const [editing, setEditing] = useState<User | null>(null);
 
   const users = data ?? [];
 
@@ -149,7 +152,7 @@ export default function AdminUsersPage() {
               <span className="flex-1">{tc('name')}</span>
               <span className="w-28">{tc('role')}</span>
               <span className="num-en w-32">{t('createdAt')}</span>
-              <span className="w-12" />
+              <span className="w-20" />
             </div>
 
             <ul className="divide-y divide-line">
@@ -186,6 +189,16 @@ export default function AdminUsersPage() {
                       {u.role === 'admin' && (
                         <ShieldCheck className="size-4 text-brand-500" aria-hidden />
                       )}
+                      {/* Edit — the only way to change someone's role or email. */}
+                      <button
+                        type="button"
+                        onClick={() => setEditing(u)}
+                        title={t('editUser')}
+                        className="inline-flex size-8 items-center justify-center rounded-lg text-ink-3 transition hover:bg-brand-500/10 hover:text-brand-600 dark:hover:text-brand-300"
+                        aria-label={t('editUser')}
+                      >
+                        <Pencil className="size-4" aria-hidden />
+                      </button>
                       <button
                         type="button"
                         onClick={() => setPendingDelete(u)}
@@ -221,6 +234,8 @@ export default function AdminUsersPage() {
       </Card>
 
       <CreateUserDialog open={createOpen} onClose={() => setCreateOpen(false)} />
+
+      <EditUserDialog open={!!editing} user={editing} onClose={() => setEditing(null)} />
 
       <ConfirmDialog
         open={!!pendingDelete}

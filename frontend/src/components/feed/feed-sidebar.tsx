@@ -1,10 +1,11 @@
 import { useTranslations } from 'next-intl';
 import {
-  FileText, Flame, Layers, PenSquare, TrendingUp, Users,
+  FileText, Flame, Layers, TrendingUp, Users,
 } from 'lucide-react';
 import { Link } from '@/i18n/navigation';
 import { Avatar, Badge } from '@/components/ui/primitives';
 import { cn, formatNumber } from '@/lib/utils';
+import { WriteCta } from '@/components/feed/write-cta';
 import type { Category, Locale, Post, User } from '@/lib/types';
 
 /**
@@ -43,7 +44,7 @@ export function FeedSidebar({
   const authors = [...authorMap.values()].sort((a, b) => b.views - a.views).slice(0, 4);
 
   return (
-    <aside className="hidden w-72 shrink-0 lg:block">
+    <aside className="hidden w-72 shrink-0 self-stretch lg:block">
       <div className="sticky top-24 space-y-4">
         {/* ── Categories ── */}
         <section className="card overflow-hidden">
@@ -159,21 +160,8 @@ export function FeedSidebar({
           </section>
         )}
 
-        {/* ── Write CTA ── */}
-        <Link
-          href="/dashboard/posts/new"
-          className="card card-hover flex items-center gap-3 p-4 !border-dashed"
-        >
-          <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-brand-500/10 text-brand-600 dark:text-brand-300">
-            <PenSquare className="size-[18px]" aria-hidden />
-          </span>
-          <span className="min-w-0">
-            <span className="block text-sm font-bold text-ink">{th('heroSecondary')}</span>
-            <span className="block text-xs text-ink-3">
-              {ts('publishFirst')}
-            </span>
-          </span>
-        </Link>
+        {/* ── CTA: "Join us" for guests, "New post" for members ── */}
+        <WriteCta />
 
         <p className="num-en flex items-center justify-center gap-1.5 px-4 pb-2 text-[11px] text-ink-4">
           <FileText className="size-3" aria-hidden />
@@ -187,7 +175,7 @@ export function FeedSidebar({
 /** Narrow-skeleton version so the layout doesn't jump before hydration. */
 export function FeedSidebarSkeleton() {
   return (
-    <aside className="hidden w-72 shrink-0 lg:block">
+    <aside className="hidden w-72 shrink-0 self-stretch lg:block">
       <div className="sticky top-24 space-y-4">
         {[0, 1].map((i) => (
           <div key={i} className="card p-4">

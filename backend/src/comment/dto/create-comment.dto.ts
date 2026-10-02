@@ -1,5 +1,4 @@
-import { IsNotEmpty, IsOptional, IsString, IsUUID, MaxLength } from 'class-validator';
-import type { UUID } from 'crypto';
+import { IsNotEmpty, IsOptional, IsString, MaxLength } from 'class-validator';
 
 export class CreateCommentDto {
   @IsString()
@@ -7,7 +6,7 @@ export class CreateCommentDto {
   @MaxLength(1000)
   content!: string;
 
-  @IsUUID('all',{message:'شناسه کامنت والد باید یک UUID معتبر باشد.'})
+  @IsString()
   @IsOptional()
-  parentId?: UUID;
+  parentId?: string;
 }

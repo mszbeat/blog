@@ -11,6 +11,13 @@
     "experimentalDecorators": true,
     "allowSyntheticDefaultImports": true,
     "target": "ES2023",
+    // ES2022+ flips this to true by default, which makes declared-but-uninitialised
+    // class fields run BEFORE constructor parameter properties are assigned. That
+    // breaks the standard NestJS idiom `private readonly log = this.logger.forContext(...)`
+    // (this.logger is still undefined) and makes TypeORM/class-validator emit
+    // `undefined` own-properties for every decorated column. Pinned to false, which
+    // is what the NestJS CLI generates for ES2021 targets.
+    "useDefineForClassFields": false,
     "sourceMap": true,
     "outDir": "./dist",
     "incremental": true,

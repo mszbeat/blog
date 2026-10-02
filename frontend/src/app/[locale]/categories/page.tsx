@@ -56,11 +56,11 @@ export default async function CategoriesPage({ params }: { params: Promise<{ loc
               <span
                 aria-hidden
                 className={cn(
-                  'absolute inset-x-0 top-0 h-1 bg-gradient-to-r opacity-70 transition-opacity group-hover:opacity-100',
+                  'absolute inset-x-0 top-0 h-1 grad-to-r opacity-70 transition-opacity group-hover:opacity-100',
                   gradientFor(c.slug),
                 )}
               />
-              <span className={cn('mt-1 flex size-10 items-center justify-center rounded-xl bg-gradient-to-br text-white shadow-sm', gradientFor(c.slug))}>
+              <span className={cn('mt-1 flex size-10 items-center justify-center rounded-xl text-white shadow-sm', gradientFor(c.slug))}>
                 <Layers className="size-5" aria-hidden />
               </span>
               <h2 className="mt-4 text-base font-bold text-ink group-hover:text-brand-600 dark:group-hover:text-brand-300">

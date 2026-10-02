@@ -4,37 +4,69 @@
 @custom-variant dark (&:where(.dark, .dark *));
 
 /* ═══════════════════════════════════════════════════════════════════
-   Design tokens — "Editorial Social"
-   Warm-cool neutrals, a confident indigo accent, three elevation levels.
-   Token NAMES are stable so every component keeps working; only the
-   values and the additions are new.
+   ★ مرکز رنگ سایت — COLOR CENTER ★
+   هر رنگی که در سایت دیده می‌شود از همین بخش می‌آید (از این خط تا
+   «پایان مرکز رنگ»). هیچ کامپوننتی رنگ hardcode ندارد، پس برای ساختن
+   ظاهر دلخواهت فقط همین‌جا را ویرایش کن.
+
+   کدام پیچ چه کاری می‌کند:
+     ۱) --color-brand-*   رنگ اصلی: دکمه‌ها، لینک‌ها، حالت فعال، حلقه‌ها
+     ۲) --color-accent-*  رنگ تأکید: حرف Z در لوگو، نشان‌ها، هایلایت‌ها
+     ۳) --color-plum-*    رنگ سوم: قلب/لایک و اعلان‌ها
+     ۴) --color-danger-* / success / warning / info   حالت‌های معنایی
+     ۵) --surface* --ink* --line*   کاغذ، متن و خطوط
+        (روشن در :root و تیره در .dark)
+     ۶) --elev-*          سایه‌ها
+     ۷) --grad-* / --glass-bg / --sheen / --on-brand   ترکیب‌های رنگ
+     ۸) --grad-1 … --grad-6   گرادیان پوشش پست و آیکون دسته‌بندی
+
+   نکته‌ها:
+     • rampها ده پله‌ای‌اند: ۵۰ روشن‌ترین → ۹۰۰ تیره‌ترین. پله‌های ۵۰۰/۶۰۰
+       باید آن‌قدر تیره باشند که متن سفید رویشان خوانا بماند.
+     • اگر فقط یک رنگ را عوض کنی، ترکیب‌ها (--grad-*) خودشان با او عوض
+       می‌شوند چون از همان متغیرها ساخته شده‌اند.
+     • نام توکن‌ها ثابت است؛ فقط مقدارها را عوض کن تا هیچ کامپوننتی نشکند.
    ═══════════════════════════════════════════════════════════════════ */
 @theme {
   --font-sans: var(--font-inter), ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
   --font-fa: var(--font-vazirmatn), var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  --font-fa-serif: var(--font-vazirmatn), ui-sans-serif, system-ui, sans-serif;
   --font-mono: ui-monospace, 'SFMono-Regular', Menlo, Consolas, monospace;
 
-  /* Brand — indigo/violet */
-  --color-brand-50: #eef1ff;
-  --color-brand-100: #e0e5ff;
-  --color-brand-200: #c6ccfe;
-  --color-brand-300: #a3a8fc;
-  --color-brand-400: #8083f8;
-  --color-brand-500: #6366f1;
-  --color-brand-600: #5046e5;
-  --color-brand-700: #4338ca;
-  --color-brand-800: #3730a3;
-  --color-brand-900: #2e2a7d;
+  /* ── Brand: "satin jade" (سبز یشمی) — the primary hue of the Jade Noir
+   * system. Desaturated a touch at the top so big fills read as polished stone
+   * rather than neon, and deep enough at 600/700 to carry white text at AA. */
+  --color-brand-50: #eefaf4;
+  --color-brand-100: #d6f2e3;
+  --color-brand-200: #aee4c8;
+  --color-brand-300: #7dd3a8;
+  --color-brand-400: #46bb85;
+  --color-brand-500: #1fa06c;
+  --color-brand-600: #15855a;
+  --color-brand-700: #126a4a;
+  --color-brand-800: #10543c;
+  --color-brand-900: #0d4534;
 
-  /* Accent — teal, used sparingly for highlights */
-  --color-accent-300: #5eead4;
-  --color-accent-400: #2dd4bf;
-  --color-accent-500: #14b8a6;
-  --color-accent-600: #0d9488;
+  /* ── Accent: warm apricot/amber. A cool-warm pair against the iris primary
+   * gives the UI a second hue for highlights without leaning on blue again. */
+  --color-accent-300: #f5d78e;
+  --color-accent-400: #eec063;
+  --color-accent-500: #d9a13c;
+  --color-accent-600: #b5822a;
 
-  /* Semantic */
+  /* ── Plum: the third hue, used for gradients, the like/heart state and
+   * notification accents. Sits between the iris and the rose. */
+  --color-plum-300: #f3a8bc;
+  --color-plum-400: #ec7f9d;
+  --color-plum-500: #dd5580;
+  --color-plum-600: #bd3f66;
+
+  /* ── ۴) معنایی: خطر / موفقیت / هشدار / اطلاع ── */
   --color-danger-500: #f43f5e;
   --color-danger-600: #e11d48;
+  --color-success-500: #22c55e;
+  --color-warning-500: #f59e0b;
+  --color-info-500: #38bdf8;
 
   --radius-card: 1.25rem;
   --radius-xl2: 1.5rem;
@@ -45,6 +77,14 @@
   --animate-shimmer: shimmer 1.7s linear infinite;
   --animate-pop: pop 0.35s cubic-bezier(0.34, 1.56, 0.64, 1) both;
   --animate-ring: ring-spin 8s linear infinite;
+  /* Bell shake when a fresh notification lands. */
+  --animate-bell: bell 0.7s cubic-bezier(0.36, 0.07, 0.19, 0.97) both;
+  /* Live toast: drops in from the top, holds, lifts away. */
+  --animate-toast-in: toast-in 0.42s cubic-bezier(0.16, 1, 0.3, 1) both;
+  --animate-toast-out: toast-out 0.28s cubic-bezier(0.4, 0, 1, 1) both;
+  --animate-slide-down: slide-down 0.24s cubic-bezier(0.16, 1, 0.3, 1) both;
+  /* Heart burst behind the like button. */
+  --animate-burst: burst 0.5s ease-out both;
 
   @keyframes fade-up {
     from { opacity: 0; transform: translateY(12px); }
@@ -65,44 +105,139 @@
     100% { transform: scale(1); }
   }
   @keyframes ring-spin { to { transform: rotate(360deg); } }
+  @keyframes bell {
+    0%, 100% { transform: rotate(0); }
+    15% { transform: rotate(14deg); }
+    30% { transform: rotate(-11deg); }
+    45% { transform: rotate(7deg); }
+    60% { transform: rotate(-4deg); }
+    75% { transform: rotate(2deg); }
+  }
+  @keyframes toast-in {
+    from { opacity: 0; transform: translateY(-24px) scale(0.96); }
+    to { opacity: 1; transform: none; }
+  }
+  @keyframes toast-out {
+    from { opacity: 1; transform: none; }
+    to { opacity: 0; transform: translateY(-14px) scale(0.98); }
+  }
+  @keyframes slide-down {
+    from { opacity: 0; transform: translateY(-8px) scale(0.98); }
+    to { opacity: 1; transform: none; }
+  }
+  @keyframes burst {
+    0% { opacity: 0.55; transform: scale(0.5); }
+    100% { opacity: 0; transform: scale(2.1); }
+  }
 }
 
-/* ── Light ── */
+/* ── Light: neutrals carry a faint violet cast so the page and the iris
+      primary feel like one system rather than grey + a painted accent. ── */
 :root {
-  --surface: #ffffff;
-  --surface-2: #f6f7fb;      /* page background */
-  --surface-3: #eef0f6;      /* subtle fills */
-  --surface-4: #e5e8f1;
-  --ink: #0e1017;
-  --ink-2: #4b5162;
-  --ink-3: #7d849a;
-  --ink-4: #a3a9bc;
-  --line: #e7e9f0;
-  --line-strong: #d6dae6;
+  --surface: #fbfdfc;
+  --surface-2: #f1f6f3;      /* page background — a deeper, greener paper */
+  --surface-3: #e7efea;      /* subtle fills */
+  --surface-4: #d9e5de;
+  --ink: #0f1613;
+  --ink-2: #41504a;
+  --ink-3: #6b7a73;
+  --ink-4: #95a29b;
+  --line: #e0eae5;
+  --line-strong: #ccdbd4;
 
-  --elev-1: 0 1px 2px rgba(14, 16, 23, 0.04), 0 1px 3px rgba(14, 16, 23, 0.06);
-  --elev-2: 0 2px 4px rgba(14, 16, 23, 0.04), 0 8px 20px -6px rgba(14, 16, 23, 0.10);
-  --elev-3: 0 4px 8px rgba(14, 16, 23, 0.05), 0 18px 40px -12px rgba(14, 16, 23, 0.18);
-  --elev-brand: 0 8px 22px -8px rgba(80, 70, 229, 0.45);
+  --elev-1: 0 1px 2px rgba(15, 22, 19, 0.05), 0 1px 3px rgba(15, 22, 19, 0.07);
+  --elev-2: 0 2px 4px rgba(15, 22, 19, 0.05), 0 10px 24px -8px rgba(13, 69, 52, 0.16);
+  --elev-3: 0 4px 8px rgba(15, 22, 19, 0.06), 0 20px 44px -14px rgba(13, 69, 52, 0.24);
+  --elev-brand: 0 10px 26px -10px rgba(21, 133, 90, 0.55);
+  --elev-plum: 0 10px 26px -10px rgba(221, 85, 128, 0.5);
+
+  /* ── ۷) ترکیب‌های رنگ (recipes) ──
+     هر کلاس رنگیِ سایت یکی از این‌ها را مصرف می‌کند؛ پس تغییر ترکیب‌ها
+     فقط همین‌جا اتفاق می‌افتد، نه در ده فایل کامپوننت. */
+  --on-brand: #ffffff;        /* رنگ متن/آیکون روی زمینه‌ی brand */
+  --sheen: #ffffff;           /* برقِ سفیدِ گرادیان ساتنی */
+
+  /* ساتنی: دکمه‌های اصلی، FAB نویگیشن، گزینه‌ی انتخاب‌شده‌ی تنظیمات */
+  --grad-satin: linear-gradient(
+    155deg,
+    color-mix(in oklab, var(--color-brand-400) 58%, var(--sheen)) 0%,
+    var(--color-brand-500) 45%,
+    var(--color-brand-700) 100%
+  );
+  /* تیترهای گرادیانی */
+  --grad-text: linear-gradient(
+    100deg,
+    var(--color-brand-600) 0%,
+    var(--color-plum-500) 52%,
+    var(--color-accent-500) 100%
+  );
+  /* حرف Z در لوگو */
+  --grad-logo: linear-gradient(
+    140deg,
+    var(--color-accent-300) 0%,
+    var(--color-accent-500) 58%,
+    var(--color-plum-500) 100%
+  );
+  /* هاله‌ی نرم پس‌زمینه‌ی hero */
+  --grad-mesh:
+    radial-gradient(at 12% 8%, color-mix(in oklab, var(--color-brand-500) 16%, transparent) 0, transparent 52%),
+    radial-gradient(at 88% 4%, color-mix(in oklab, var(--color-plum-500) 13%, transparent) 0, transparent 48%),
+    radial-gradient(at 62% 96%, color-mix(in oklab, var(--color-accent-500) 12%, transparent) 0, transparent 50%);
+  /* شبکه‌ی خطوط پس‌زمینه */
+  --grad-grid:
+    linear-gradient(to right, var(--line) 1px, transparent 1px),
+    linear-gradient(to bottom, var(--line) 1px, transparent 1px);
+  /* محو شدن متن برای «ادامه» */
+  --grad-fade: linear-gradient(to bottom, transparent, var(--surface));
+  /* پنل شیشه‌ای */
+  --glass-bg: color-mix(in oklab, var(--surface) 78%, transparent);
+  --glass-halo: color-mix(in oklab, var(--color-accent-500) 22%, transparent);
+
+  /* ── ۸) گرادیان پوشش پست / آیکون دسته‌بندی ──
+     lib/utils.ts → gradientFor() بر اساس هشِ شناسه یکی از این شش کلاس
+     (grad-1 … grad-6) را برمی‌گرداند. */
+  --grad-1-from: #6366f1;  --grad-1-to: #a855f7;
+  --grad-2-from: #0ea5e9;  --grad-2-to: #22d3ee;
+  --grad-3-from: #f59e0b;  --grad-3-to: #f43f5e;
+  --grad-4-from: #10b981;  --grad-4-to: #0ea5e9;
+  --grad-5-from: #8b5cf6;  --grad-5-to: #ec4899;
+  --grad-6-from: #14b8a6;  --grad-6-to: #84cc16;
 }
 
-/* ── Dark: page is DARKER than cards, so cards read as elevated ── */
+/* ── Dark: navy-plum base. The page is darker than the cards so cards read
+      as elevated, and the hue shift keeps it from being flat neutral grey. ── */
 .dark {
-  --surface: #12151d;
-  --surface-2: #0a0c11;
-  --surface-3: #1a1e29;
-  --surface-4: #232838;
-  --ink: #eef1f8;
-  --ink-2: #a5adc1;
-  --ink-3: #767e94;
-  --ink-4: #5a6175;
-  --line: #1e232e;
-  --line-strong: #2b3140;
+  --surface: #101613;        /* card */
+  --surface-2: #090d0b;      /* page — near-black, green-tinted */
+  --surface-3: #17201c;
+  --surface-4: #202b26;
+  --ink: #eaf3ee;
+  --ink-2: #a9b8b0;
+  --ink-3: #7c8b84;
+  --ink-4: #5b6a63;
+  --line: #1c2621;
+  --line-strong: #2b3831;
 
-  --elev-1: 0 1px 2px rgba(0, 0, 0, 0.4);
-  --elev-2: 0 2px 6px rgba(0, 0, 0, 0.4), 0 10px 24px -8px rgba(0, 0, 0, 0.55);
-  --elev-3: 0 6px 14px rgba(0, 0, 0, 0.45), 0 24px 48px -16px rgba(0, 0, 0, 0.7);
-  --elev-brand: 0 8px 24px -8px rgba(99, 102, 241, 0.4);
+  --elev-1: 0 1px 2px rgba(0, 0, 0, 0.5);
+  --elev-2: 0 2px 6px rgba(0, 0, 0, 0.5), 0 12px 28px -10px rgba(0, 0, 0, 0.65);
+  --elev-3: 0 6px 14px rgba(0, 0, 0, 0.55), 0 26px 52px -18px rgba(0, 0, 0, 0.8);
+  --elev-brand: 0 10px 28px -10px rgba(31, 160, 108, 0.45);
+  --elev-plum: 0 10px 28px -10px rgba(236, 127, 157, 0.4);
+
+  /* ── ۷b) ترکیب‌هایی که در حالت تیره فرق می‌کنند ──
+     در تیره پله‌های روشن‌ترِ هر ramp خوانا‌ترند و برق ساتنی باید کمتر باشد. */
+  --grad-text: linear-gradient(
+    100deg,
+    var(--color-brand-300) 0%,
+    var(--color-plum-300) 52%,
+    var(--color-accent-300) 100%
+  );
+  --grad-satin: linear-gradient(
+    155deg,
+    color-mix(in oklab, var(--color-brand-400) 40%, var(--sheen)) 0%,
+    var(--color-brand-500) 48%,
+    var(--color-brand-800) 100%
+  );
 }
 
 @theme inline {
@@ -121,7 +256,26 @@
   --shadow-elev-2: var(--elev-2);
   --shadow-elev-3: var(--elev-3);
   --shadow-brand: var(--elev-brand);
+  --shadow-plum: var(--elev-plum);
 }
+
+/* ── کلاس‌های گرادیان پوشش؛ خروجیِ gradientFor() در lib/utils.ts ──
+   جهت پیش‌فرض مورب است؛ برای نوار افقی کلاس grad-to-r را کنارش بگذار.
+   چون جهت و رنگ از هم جدا شده‌اند، یک پالت شش‌تایی هم مورب مصرف می‌شود
+   هم افقی — بدون تعریف دوازده کلاس. */
+@layer utilities {
+  .grad-1, .grad-2, .grad-3, .grad-4, .grad-5, .grad-6 {
+    background-image: linear-gradient(var(--g-dir, to bottom right), var(--g-from), var(--g-to));
+  }
+  .grad-1 { --g-from: var(--grad-1-from); --g-to: var(--grad-1-to); }
+  .grad-2 { --g-from: var(--grad-2-from); --g-to: var(--grad-2-to); }
+  .grad-3 { --g-from: var(--grad-3-from); --g-to: var(--grad-3-to); }
+  .grad-4 { --g-from: var(--grad-4-from); --g-to: var(--grad-4-to); }
+  .grad-5 { --g-from: var(--grad-5-from); --g-to: var(--grad-5-to); }
+  .grad-6 { --g-from: var(--grad-6-from); --g-to: var(--grad-6-to); }
+  .grad-to-r { --g-dir: to right; }
+}
+/* ═══════════════ پایان مرکز رنگ — COLOR CENTER END ═══════════════ */
 
 @layer base {
   * { border-color: var(--line); }
@@ -141,7 +295,37 @@
     text-rendering: optimizeLegibility;
   }
 
-  html[lang='fa'] body { font-family: var(--font-fa); line-height: 1.9; }
+  html[lang='fa'] body { font-family: var(--font-fa); line-height: 1.9; font-weight: 480; }
+
+  /* ── Horizontal-overflow guard ─────────────────────────────────────────
+     Several decorative layers (blurred hero backdrops, mesh banners, wide
+     numeric strings) can push the document a few pixels past the viewport on
+     small screens, which on mobile reads as "the page is zoomed / I must pinch
+     to see it". `clip` (not `hidden`) removes the horizontal scrollbar WITHOUT
+     turning <body> into a scroll container, so inner `overflow-x-auto` chip
+     rows and carousels keep scrolling normally. */
+  html, body { overflow-x: clip; }
+
+  /* ── Persian letter-spacing ────────────────────────────────────────────
+     Arabic script is cursive: ANY letter-spacing (positive or negative) pulls
+     joined glyphs apart or crams them, and both look broken. The design system
+     leans on `tracking-tight` for Latin headings, so neutralise every tracking
+     utility under the Persian locale. */
+  html[lang='fa'] :where(h1, h2, h3, h4, h5, h6),
+  html[lang='fa'] .tracking-tight,
+  html[lang='fa'] .tracking-tighter,
+  html[lang='fa'] .tracking-normal,
+  html[lang='fa'] .tracking-wide,
+  html[lang='fa'] .tracking-wider,
+  html[lang='fa'] .tracking-widest { letter-spacing: 0; }
+
+  /* Long-form Persian prose reads better in a bookier face at a slightly
+     larger size with airier leading than the UI sans. */
+  html[lang='fa'] .prose-blog:not(.prose-feed) {
+    font-size: 1.0625rem;
+    line-height: 2.15;
+    font-weight: 430;
+  }
   html[lang='en'] body { line-height: 1.7; }
 
   /* Headings get tighter tracking at large sizes — reads more "designed". */
@@ -150,7 +334,7 @@
 
   p { text-wrap: pretty; }
 
-  ::selection { background: var(--color-brand-500); color: #fff; }
+  ::selection { background: var(--color-brand-500); color: var(--on-brand); }
 
   :focus-visible {
     outline: 2px solid var(--color-brand-500);
@@ -188,30 +372,13 @@
 
   /* ── Glass panel (sticky sidebars, floating bars) ── */
   .glass {
-    background: color-mix(in oklab, var(--surface) 78%, transparent);
+    background: var(--glass-bg);
     backdrop-filter: blur(16px) saturate(160%);
     -webkit-backdrop-filter: blur(16px) saturate(160%);
     border: 1px solid var(--line);
   }
 
-  /* ── Instagram-style gradient avatar ring ── */
-  .avatar-ring {
-    position: relative;
-    padding: 2px;
-    border-radius: 9999px;
-    background: conic-gradient(
-      from 180deg,
-      var(--color-brand-500),
-      var(--color-accent-400),
-      #f472b6,
-      #fb923c,
-      var(--color-brand-500)
-    );
-  }
-  .avatar-ring > * { border-radius: 9999px; }
-  .avatar-ring-static {
-    background: linear-gradient(135deg, var(--color-brand-500), var(--color-accent-400));
-  }
+  /* حلقه‌ی گرادیانی دور آواتار حذف شد — آواتارها دیگر قاب رنگی ندارند. */
 
   /* ── Feed action button (like/comment/share row) ── */
   .feed-action {
@@ -247,11 +414,69 @@
   }
   .chip:hover { border-color: var(--color-brand-400); color: var(--color-brand-600); }
   .dark .chip:hover { color: var(--color-brand-300); }
-  .chip[data-active='true'] {
+  .chip[data-active='true'],
+  .chip-active {
     background: var(--color-brand-600);
     border-color: var(--color-brand-600);
-    color: #fff;
+    color: var(--on-brand);
     box-shadow: var(--elev-brand);
+  }
+  .chip-active:hover { color: var(--on-brand); border-color: var(--color-brand-700); }
+
+  /* ── Notification row ──
+   * `data-type` drives the accent stripe + icon tint, so the four activity
+   * kinds are distinguishable at a glance without any extra markup. */
+  .notif {
+    position: relative;
+    display: flex;
+    gap: 0.75rem;
+    padding: 0.75rem 0.875rem;
+    border-radius: 0.875rem;
+    transition: background-color 0.16s ease;
+  }
+  .notif:hover { background: var(--surface-2); }
+  .notif[data-unread='true'] { background: color-mix(in oklab, var(--color-brand-500) 7%, transparent); }
+  .notif[data-unread='true']:hover { background: color-mix(in oklab, var(--color-brand-500) 11%, transparent); }
+  /* Unread marker dot, placed on the inline-start edge. */
+  .notif[data-unread='true']::before {
+    content: '';
+    position: absolute;
+    inset-inline-start: 0.1875rem;
+    top: 50%;
+    translate: 0 -50%;
+    size: 0.375rem;
+    width: 0.375rem; height: 0.375rem;
+    border-radius: 9999px;
+    background: var(--color-brand-500);
+  }
+
+  /* Per-type icon chips. */
+  .notif-icon {
+    display: flex; align-items: center; justify-content: center;
+    width: 2.25rem; height: 2.25rem;
+    flex-shrink: 0;
+    border-radius: 0.75rem;
+    font-size: 1rem;
+    line-height: 1;
+  }
+  .notif-icon[data-type='follow']  { background: color-mix(in oklab, var(--color-brand-500) 14%, transparent); }
+  .notif-icon[data-type='like']    { background: color-mix(in oklab, var(--color-plum-500) 15%, transparent); }
+  .notif-icon[data-type='comment'] { background: color-mix(in oklab, var(--color-accent-500) 17%, transparent); }
+  .notif-icon[data-type='reply']   { background: color-mix(in oklab, var(--color-success-500) 15%, transparent); }
+
+  /* ── Like button ── */
+  .like-btn { position: relative; }
+  .like-btn[data-liked='true'] { color: var(--color-plum-500); }
+  .dark .like-btn[data-liked='true'] { color: var(--color-plum-400); }
+  .like-burst {
+    position: absolute;
+    inset: 0;
+    margin: auto;
+    width: 1.5rem; height: 1.5rem;
+    border-radius: 9999px;
+    background: radial-gradient(circle, var(--color-plum-400) 0%, transparent 70%);
+    animation: var(--animate-burst);
+    pointer-events: none;
   }
 
   /* ── Skeleton ── */
@@ -296,15 +521,24 @@
     content: '';
     position: absolute;
     inset-inline: 0; bottom: 0; height: 3.5rem;
-    background: linear-gradient(to bottom, transparent, var(--surface));
+    background: var(--grad-fade);
     pointer-events: none;
   }
 
-  /* Grid background used behind heroes. */
+  /* تیتر گرادیانی — رنگش از --grad-text می‌آید (در .dark خودش عوض می‌شود). */
+  .text-gradient {
+    background: var(--grad-text);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+
+  /* هاله‌ی نرم پشت hero — سه برکه‌ی رنگی از پالت. */
+  .bg-mesh { background-image: var(--grad-mesh); }
+
+  /* شبکه‌ی خطوط پشت hero. */
   .bg-grid {
-    background-image:
-      linear-gradient(to right, var(--line) 1px, transparent 1px),
-      linear-gradient(to bottom, var(--line) 1px, transparent 1px);
+    background-image: var(--grad-grid);
     background-size: 56px 56px;
   }
 }
@@ -401,3 +635,46 @@ html[dir='rtl'] .prose-blog blockquote { border-radius: 0.625rem 0 0 0.625rem; }
 .prose-blog th { background: var(--surface-3); color: var(--ink); font-weight: 600; }
 
 .prose-blog hr { border: 0; border-block-start: 1px solid var(--line); margin-block: 2em; }
+
+/* ═══════════════════════════════════════════════════════════════
+   Brand mark — "Zlog"
+   The LEADING Z is the signature letter: apricot gradient, heavier
+   weight, slightly oversized, and nudged up so it reads as a monogram
+   rather than as the first character of a word.
+   ═══════════════════════════════════════════════════════════════ */
+.brand-logo {
+  /* Keeps the oversized Z from shifting the line box around it. */
+  line-height: 1;
+}
+.brand-logo-z {
+  /* Z leads, so the breathing room goes AFTER it, before "log". */
+  margin-inline-end: 0.02em;
+  font-size: 1.34em;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  translate: 0 -0.035em;
+  background: var(--grad-logo);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  /* هاله‌ی نرم تا گرادیان در هر دو تم خوانا بماند. */
+  filter: drop-shadow(0 1px 0 var(--glass-halo));
+}
+
+/* ساتنی — برقِ نرم روی سطوح اصلی؛ رنگش از --grad-satin در مرکز رنگ می‌آید. */
+.satin { background-image: var(--grad-satin); }
+
+/* Accessibility: the Settings dialog can switch all motion off. */
+.reduce-motion *,
+.reduce-motion *::before,
+.reduce-motion *::after {
+  animation-duration: 0.001ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.001ms !important;
+  scroll-behavior: auto !important;
+}
+
+/* Instagram-style bottom navigation (mobile only). */
+.bottom-nav {
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
