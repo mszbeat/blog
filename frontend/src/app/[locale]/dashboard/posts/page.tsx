@@ -141,10 +141,10 @@ export default function MyPostsPage() {
           <>
             {/* Header row — hidden on mobile, where each row becomes a card */}
             <div className="hidden items-center gap-4 border-b border-line px-4 py-2.5 text-xs font-bold uppercase tracking-wide text-ink-3 md:flex">
-              <span className="flex-1">{t('title')}</span>
-              <span className="w-24">{tc('status')}</span>
-              <span className="num-en w-20 text-end">{t('viewCount')}</span>
-              <span className="num-en w-28">{tc('updatedAt')}</span>
+              <span className="flex-1 pl-16">{t('title')}</span>
+              <span className="pl-20 w-38">{tc('status')}</span>
+              <span className="num-en mr-7 w-20 text-end">{t('viewCount')}</span>
+              <span className="num-en mr-21 w-20">{tc('updatedAt')}</span>
               <span className="w-10" />
             </div>
 
@@ -188,7 +188,7 @@ export default function MyPostsPage() {
                         {truncate(post.excerpt || post.content || '', 90)}
                       </p>
                       <p className="num-en mt-1 flex items-center gap-3 text-[11px] text-ink-3 md:hidden">
-                        <span className="inline-flex items-center gap-1">
+                        <span className="inline-flex mr-40 items-center gap-1">
                           <Eye className="size-3" aria-hidden />
                           {formatNumber(post.viewCount ?? 0, locale)}
                         </span>
@@ -202,10 +202,10 @@ export default function MyPostsPage() {
                         {post.published ? t('published') : t('draft')}
                       </Badge>
                     </span>
-                    <span className="num-en hidden w-20 text-end text-sm text-ink-2 md:block">
+                    <span className="num-en me-6 hidden w-14 text-end text-sm text-ink-2 md:block">
                       {formatNumber(post.viewCount ?? 0, locale)}
                     </span>
-                    <span className="num-en hidden w-28 text-xs text-ink-3 md:block">
+                    <span className="num-en hidden pl-6 w-28 text-xs text-ink-3 md:block">
                       {formatDate(post.updatedAt, locale, { year: 'numeric', month: 'short', day: 'numeric' })}
                     </span>
 
