@@ -19,6 +19,8 @@ export const REDIS_CLIENT = 'REDIS_CLIENT';
         const client = new Redis({
           host: configService.get<string>('REDIS_URL'),
           port: configService.get<number>('REDIS_PORT'),
+          password:configService.get<string>('REDIS_PASSWORD'),
+          tls: configService.get<string>('REDIS_PASSWORD') ? {} : undefined,
           maxRetriesPerRequest: 2,
           commandTimeout: 2500,
         });
