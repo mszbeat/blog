@@ -1,4 +1,3 @@
-// import { BackButton } from '@/components/back-button';
 import type { Metadata } from 'next';
 import { setRequestLocale, getTranslations } from 'next-intl/server';
 import { getAuthorPageData } from '@/lib/server-api';
@@ -64,7 +63,6 @@ export default async function UserProfilePage({ params }: Props) {
     return (
       <div className="mx-auto max-w-3xl px-4 py-14 sm:px-6">
         <ApiDownNotice />
-        {/* <BackButton /> */}
       </div>
     );
   }
@@ -73,12 +71,6 @@ export default async function UserProfilePage({ params }: Props) {
 
   return (
     <div className="pb-16">
-      {/* ══════════ Back — sticky, top corner ══════════
-          The coloured banner that used to carry this link is gone: profile pages
-          now start on a plain surface, identical to the dashboard profile. */}
-      {/* <div className="sticky top-20 z-30 mx-auto max-w-5xl px-4 pb-4 pt-5 sm:px-6">
-        <BackButton />
-      </div> */}
 
       {/* ══════════ Identity + stats + tabs ══════════ */}
       <div className="mx-auto max-w-5xl px-4 sm:px-6">

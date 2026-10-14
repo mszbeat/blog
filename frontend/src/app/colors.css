@@ -1,0 +1,156 @@
+/* ═══════════ رنگ‌های سایت — ویرایش از همین فایل ═══════════
+   این فایل CSS استاندارد است، نه بلاک اختصاصی Tailwind.
+   روی مربع کنار HEX یا خود مقدار مکث/کلیک کنید تا انتخابگر رنگ ویرایشگر باز شود.
+   VS Code: پوشه پروژه را باز کنید؛ تنظیمات .vscode همراه پروژه است.
+   اگر نمایش داده نشد: Language Mode = CSS و Editor: Color Decorators = روشن.
+   تغییر مقدارهای این فایل، ابزارها و صفحه پالت سایت را هم تغییر می‌دهد.
+*/
+:root {
+  --palette-brand-50: #eefaf4;
+  --palette-brand-100: #d6f2e3;
+  --palette-brand-200: #aee4c8;
+  --palette-brand-300: #7dd3a8;
+  --palette-brand-400: #46bb85;
+  --palette-brand-500: #1fa06c;
+  --palette-brand-600: #15855a;
+  --palette-brand-700: #126a4a;
+  --palette-brand-800: #10543c;
+  --palette-brand-900: #0d4534;
+  --palette-accent-300: #f5d78e;
+  --palette-accent-400: #eec063;
+  --palette-accent-500: #d9a13c;
+  --palette-accent-600: #b5822a;
+  --palette-plum-300: #f3a8bc;
+  --palette-plum-400: #ec7f9d;
+  --palette-plum-500: #dd5580;
+  --palette-plum-600: #bd3f66;
+  --palette-danger-500: #f43f5e;
+  --palette-danger-600: #e11d48;
+  --palette-success-500: #22c55e;
+  --palette-warning-500: #f59e0b;
+  --palette-info-500: #38bdf8;
+}
+
+:root {
+  --surface: #fbfdfc;
+  --surface-2: #f1f6f3;      /* page background — a deeper, greener paper */
+  --surface-3: #e7efea;      /* subtle fills */
+  --surface-4: #d9e5de;
+  --ink: #0f1613;
+  --ink-2: #41504a;
+  --ink-3: #6b7a73;
+  --ink-4: #95a29b;
+  --line: #e0eae5;
+  --line-strong: #ccdbd4;
+
+  --elev-1: 0 1px 2px var(--shadow-color-1), 0 1px 3px var(--shadow-color-2);
+  --elev-2: 0 2px 4px var(--shadow-color-1), 0 10px 24px -8px var(--shadow-color-3);
+  --elev-3: 0 4px 8px var(--shadow-color-4), 0 20px 44px -14px var(--shadow-color-5);
+  --elev-brand: 0 10px 26px -10px var(--shadow-color-6);
+  --elev-plum: 0 10px 26px -10px var(--shadow-color-7);
+
+  /* ── ۷) ترکیب‌های رنگ (recipes) ──
+     هر کلاس رنگیِ سایت یکی از این‌ها را مصرف می‌کند؛ پس تغییر ترکیب‌ها
+     فقط همین‌جا اتفاق می‌افتد، نه در ده فایل کامپوننت. */
+  --on-brand: #ffffff;        /* رنگ متن/آیکون روی زمینه‌ی brand */
+  --sheen: #ffffff;           /* برقِ سفیدِ گرادیان ساتنی */
+
+  /* ساتنی: دکمه‌های اصلی، FAB نویگیشن، گزینه‌ی انتخاب‌شده‌ی تنظیمات */
+  --grad-satin: linear-gradient(
+    155deg,
+    color-mix(in oklab, var(--color-brand-400) 58%, var(--sheen)) 0%,
+    var(--color-brand-500) 45%,
+    var(--color-brand-700) 100%
+  );
+  /* تیترهای گرادیانی */
+  --grad-text: linear-gradient(
+    100deg,
+    var(--color-brand-600) 0%,
+    var(--color-plum-500) 52%,
+    var(--color-accent-500) 100%
+  );
+  /* حرف Z در لوگو */
+  --grad-logo: linear-gradient(
+    140deg,
+    var(--color-accent-300) 0%,
+    var(--color-accent-500) 58%,
+    var(--color-plum-500) 100%
+  );
+  /* هاله‌ی نرم پس‌زمینه‌ی hero */
+  --grad-mesh:
+    radial-gradient(at 12% 8%, color-mix(in oklab, var(--color-brand-500) 16%, transparent) 0, transparent 52%),
+    radial-gradient(at 88% 4%, color-mix(in oklab, var(--color-plum-500) 13%, transparent) 0, transparent 48%),
+    radial-gradient(at 88% 4%, color-mix(in oklab, var(--color-plum-500) 13%, transparent) 0, transparent 48%),
+    radial-gradient(at 88% 4%, color-mix(in oklab, var(--color-plum-600) 13%, transparent) 0, transparent 48%),
+    radial-gradient(at 88% 4%, color-mix(in oklab, var(--color-plum-500) 13%, transparent) 0, transparent 48%),
+    radial-gradient(at 62% 96%, color-mix(in oklab, var(--color-accent-500) 12%, transparent) 0, transparent 50%);
+  /* شبکه‌ی خطوط پس‌زمینه */
+  --grad-grid:
+    linear-gradient(to right, var(--line) 1px, transparent 1px),
+    linear-gradient(to bottom, var(--line) 1px, transparent 1px);
+  /* محو شدن متن برای «ادامه» */
+  --grad-fade: linear-gradient(to bottom, transparent, var(--surface));
+  /* پنل شیشه‌ای */
+  --glass-bg: color-mix(in oklab, var(--surface) 78%, transparent);
+  --glass-halo: color-mix(in oklab, var(--color-accent-500) 22%, transparent);
+
+  /* ── ۸) گرادیان پوشش پست / آیکون دسته‌بندی ──
+     lib/utils.ts → gradientFor() بر اساس هشِ شناسه یکی از این شش کلاس
+     (grad-1 … grad-6) را برمی‌گرداند. */
+  --grad-1-from: #1f204a43;  --grad-1-to: #341a4c40;
+  --grad-2-from: #03293b41;  --grad-2-to: #0c424a3e;
+  --grad-3-from: #4d32043e;  --grad-3-to: #57182245;
+  --grad-4-from: #04392749;  --grad-4-to: #03263646;
+  --grad-5-from: #1e143643;  --grad-5-to: #3d132844;
+  --grad-6-from: #052d2844;  --grad-6-to: #1e2e0543;
+}
+
+.dark {
+  --surface: #101613;        /* card */
+  --surface-2: #090d0b;      /* page — near-black, green-tinted */
+  --surface-3: #17201c;
+  --surface-4: #202b26;
+  --ink: #eaf3ee;
+  --ink-2: #a9b8b0;
+  --ink-3: #7c8b84;
+  --ink-4: #5b6a63;
+  --line: #1c2621;
+  --line-strong: #2b3831;
+
+  --elev-1: 0 1px 2px var(--shadow-color-8);
+  --elev-2: 0 2px 6px var(--shadow-color-8), 0 12px 28px -10px var(--shadow-color-9);
+  --elev-3: 0 6px 14px var(--shadow-color-10), 0 26px 52px -18px var(--shadow-color-11);
+  --elev-brand: 0 10px 28px -10px var(--shadow-color-12);
+  --elev-plum: 0 10px 28px -10px var(--shadow-color-13);
+
+  /* ── ۷b) ترکیب‌هایی که در حالت تیره فرق می‌کنند ──
+     در تیره پله‌های روشن‌ترِ هر ramp خوانا‌ترند و برق ساتنی باید کمتر باشد. */
+  --grad-text: linear-gradient(
+    100deg,
+    var(--color-brand-300) 0%,
+    var(--color-plum-300) 52%,
+    var(--color-accent-300) 100%
+  );
+  --grad-satin: linear-gradient(
+    155deg,
+    color-mix(in oklab, var(--color-brand-400) 40%, var(--sheen)) 0%,
+    var(--color-brand-500) 48%,
+    var(--color-brand-800) 100%
+  );
+}
+
+:root {
+  --shadow-color-1: #0f16130d;
+  --shadow-color-2: #0f161312;
+  --shadow-color-3: #0d453429;
+  --shadow-color-4: #0f16130f;
+  --shadow-color-5: #0d45343d;
+  --shadow-color-6: #15855a8c;
+  --shadow-color-7: #dd558080;
+  --shadow-color-8: #00000080;
+  --shadow-color-9: #000000a6;
+  --shadow-color-10: #0000008c;
+  --shadow-color-11: #000000cc;
+  --shadow-color-12: #1fa06c73;
+  --shadow-color-13: #ec7f9d66;
+}

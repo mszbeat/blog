@@ -28,7 +28,7 @@ export function ImageCarousel({
   const touchX = useRef<number | null>(null);
 
   const count = images.length;
-  const safe = Math.min(index, count - 1);
+  const safe = Math.max(0, Math.min(index, count - 1));
 
   // If the set shrinks (edit removed images), never point past the end.
   useEffect(() => { if (index > count - 1) setIndex(Math.max(0, count - 1)); }, [count, index]);
@@ -39,12 +39,14 @@ export function ImageCarousel({
 
   if (count === 0) return null;
 
+  // A bounded, stable frame contains every aspect ratio without cropping.
+  // The CSS height cap also adapts to short viewports.
   // A single image needs no chrome — render it plain.
   if (count === 1) {
     return (
-      <div className={cn('overflow-hidden rounded-2xl border border-line bg-surface-3', className)}>
+      <div className={cn('post-gallery-frame overflow-hidden rounded-2xl border border-line bg-surface-3', className)}>
         {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src={images[0]} alt={alt ?? ''} className="aspect-[16/10] w-full object-cover" />
+        <img src={images[0]} alt={alt ?? ''} className="post-gallery-image" />
       </div>
     );
   }
@@ -70,7 +72,7 @@ export function ImageCarousel({
         if (Math.abs(dx) > 40) go((dx < 0 ? 1 : -1) * (rtl ? -1 : 1));
         touchX.current = null;
       }}
-      className={cn('group relative select-none overflow-hidden rounded-2xl border border-line bg-surface-3 outline-none focus-visible:ring-2 focus-visible:ring-brand-400', className)}
+      className={cn('post-gallery-frame group relative select-none overflow-hidden rounded-2xl border border-line bg-surface-3 outline-none focus-visible:ring-2 focus-visible:ring-brand-400', className)}
     >
       {/* Slides — only the active one is in flow; others are swapped, not stacked. */}
       {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -78,7 +80,7 @@ export function ImageCarousel({
         key={images[safe]}
         src={images[safe]}
         alt={alt ? `${alt} — ${safe + 1}/${count}` : ''}
-        className="aspect-[16/10] w-full object-cover animate-fade-in"
+        className="post-gallery-image animate-fade-in"
         draggable={false}
       />
 

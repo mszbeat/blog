@@ -1,4 +1,4 @@
-// import { BackButton } from '@/components/back-button';
+import { getPostImages } from '@/lib/post-images';
 import { notFound } from 'next/navigation';
 import type { Metadata } from 'next';
 import { getTranslations } from 'next-intl/server';
@@ -67,7 +67,6 @@ export default async function PostDetailPage({ params }: Props) {
     return (
       <div className="mx-auto max-w-3xl px-4 py-14 sm:px-6">
         <ApiDownNotice />
-        {/* <BackButton /> */}
       </div>
     );
   }
@@ -75,20 +74,13 @@ export default async function PostDetailPage({ params }: Props) {
   const cover = resolveMedia(post.coverImage);
   /* Gallery (upload order) drives the slideshow; the first slide doubles as the
      ambient blurred backdrop and as the card/OG thumbnail fallback. */
-  const gallery = (post.images ?? []).map((u) => resolveMedia(u)).filter((u): u is string => !!u);
+  const gallery = getPostImages(post).map((u) => resolveMedia(u)).filter((u): u is string => !!u);
   const heroSrc = gallery[0] ?? cover;
   const mins = readingMinutes(post.content ?? '');
   const author = post.author;
 
   return (
     <article className="pb-16">
-      {/* ── Sticky "back to the site" ──
-          Pinned to the top corner so it stays one tap away while reading. It
-          used to sit at the BOTTOM of the rail, under the author card, where
-          nobody ever found it. */}
-      {/* <div className="sticky top-20 z-30 mx-auto max-w-[68rem] px-4 pb-3 sm:px-6">
-        <BackButton />
-      </div> */}
       {/* ══════════ Hero ══════════
        * The cover appears twice on purpose: a scaled, heavily blurred copy
        * fills the band edge-to-edge as an ambient backdrop, and the sharp

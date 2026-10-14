@@ -1,3 +1,4 @@
+import { normalizePostMedia } from './post-media';
 import {
   Injectable,
   NotFoundException,
@@ -45,6 +46,7 @@ export class PostService {
 
     const post = this.postsRepo.create({
       ...postData,
+      ...normalizePostMedia(postData),
       slug,
       authorId,
     });
@@ -252,6 +254,12 @@ export class PostService {
     const post = await this.findOneById(id);
     this.checkOwnership(post, currentUserId, currentUserRole);
 
+    const before = {
+      title: post.title,
+      slug: post.slug,
+      published: post.published,
+    };
+
     const { categories, ...postData } = updatePostDto;
 
     if (postData.title && postData.title !== post.title) {
@@ -262,8 +270,7 @@ export class PostService {
       post.categories = await this.categoriesService.findByIds(categories);
     }
 
-    const before = { title: post.title, slug: post.slug, published: post.published };
-    Object.assign(post, postData);
+    Object.assign(post, postData, normalizePostMedia(postData, post));
     const updatedPost = await this.postsRepo.save(post);
 
     await Promise.all([

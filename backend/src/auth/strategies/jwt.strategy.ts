@@ -28,10 +28,13 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     if (!sessionExists) {
       throw ERROR_MESSAGES.AUTH.invalidSessionOrToken;
     }
-    const user = await this.usersService.findOneById(payload.id);
+    const user = await this.usersService.findOneByIdWithPassword(payload.id);
     if (!user) {
       throw ERROR_MESSAGES.USERS.userNotFound;
     }
-    return { ...user, sessionId: payload.sessionId };
+    // Authorization must reflect demotion/deletion immediately, even if Redis
+    // has a stale profile entry or data caching was toggled. Never expose hashes.
+    const { password, ...safeUser } = user;
+    return { ...safeUser, sessionId: payload.sessionId };
   }
 }

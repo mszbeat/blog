@@ -1,38 +1,18 @@
-import { Inject, Injectable } from '@nestjs/common';
-import { REDIS_CLIENT } from '../redis/redis.module';
+import { Injectable } from '@nestjs/common';
 import { User } from './entities/user.entity';
-import Redis from 'ioredis';
+import { DataCacheService } from '../redis/data-cache.service';
 
 @Injectable()
 export class UserCacheService {
-  private readonly expireTimeCache = 86400; // 24 hours in seconds
-
-  constructor(
-    @Inject(REDIS_CLIENT)
-    private readonly redisClient: Redis,
-  ) {}
-
-  private getKeyId(userId: string): string {
-    return `user:${userId}`;
+  constructor(private readonly cache: DataCacheService) {}
+  createCache(user: User): Promise<void> {
+    const { password, ...safeUser } = user;
+    return this.cache.set(`user:${user.id}`, safeUser, 86400);
   }
-
-  async createCache(user: User): Promise<void> {
-    const { password, ...userWithoutPassword } = user;
-    await this.redisClient.set(
-      this.getKeyId(user.id),
-      JSON.stringify(userWithoutPassword),
-      'EX',
-      this.expireTimeCache,
-    );
+  getById(id: string) {
+    return this.cache.get<User>(`user:${id}`);
   }
-
-  async getById(userId: string): Promise<User | null> {
-    const key = this.getKeyId(userId);
-    const cachedUser = await this.redisClient.get(key);
-    return cachedUser ? (JSON.parse(cachedUser) as User) : null;
-  }
-
-  async deleteCache(id: string): Promise<void> {
-    await this.redisClient.del(this.getKeyId(id));
+  deleteCache(id: string) {
+    return this.cache.delete(`user:${id}`);
   }
 }

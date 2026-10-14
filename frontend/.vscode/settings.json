@@ -1,0 +1,11 @@
+{
+  "editor.colorDecorators": true,
+  "editor.colorDecoratorsLimit": 1000,
+  "editor.defaultColorDecorators": "always",
+  "files.associations": {
+    "*.css": "css"
+  },
+  "css.customData": [
+    ".vscode/css-data.json"
+  ]
+}

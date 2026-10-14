@@ -1,7 +1,7 @@
 'use client';
 
 import { useLocale, useTranslations } from 'next-intl';
-import { Layers, LayoutDashboard, Shield, Users } from 'lucide-react';
+import { Layers, LayoutDashboard, Palette, Shield, Users } from 'lucide-react';
 import { Link, usePathname } from '@/i18n/navigation';
 import { AuthGuard } from '@/components/auth-guard';
 import { cn } from '@/lib/utils';
@@ -27,6 +27,7 @@ function Shell({ children }: { children: React.ReactNode }) {
   const links = [
     { href: '/admin', label: td('sections.admin'), icon: Shield, exact: true },
     { href: '/admin/users', label: t('title'), icon: Users },
+    { href: '/admin/palette', label: locale === 'fa' ? 'تم‌ها و رنگ‌ها' : 'Themes & colors', icon: Palette },
     { href: '/admin/categories', label: tcat('title'), icon: Layers },
     { href: '/dashboard', label: tn('dashboard'), icon: LayoutDashboard },
   ];
@@ -50,8 +51,8 @@ function Shell({ children }: { children: React.ReactNode }) {
         </div>
       </header>
 
-      <div className="mt-7 grid gap-7 lg:grid-cols-[13rem_1fr]">
-        <aside>
+      <div className="mt-7 grid grid-cols-1 gap-7 lg:grid-cols-[13rem_1fr]">
+        <aside className="min-w-0">
           <nav
             aria-label={locale === 'fa' ? 'منوی مدیریت' : 'Admin menu'}
             className="no-scrollbar -mx-1 flex gap-1.5 overflow-x-auto px-1 lg:mx-0 lg:sticky lg:top-24 lg:flex-col lg:overflow-visible lg:px-0"

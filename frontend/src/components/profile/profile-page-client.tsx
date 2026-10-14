@@ -24,9 +24,6 @@ import { useAuth } from '@/lib/auth-context';
 import { usePublicProfile } from '@/lib/queries';
 import { ProfileHeader } from '@/components/profile/profile-header';
 import { ProfileTabs, type ProfileTab } from '@/components/profile/profile-tabs';
-import { Card } from '@/components/ui/primitives';
-import { FileText } from 'lucide-react';
-import { useTranslations } from 'next-intl';
 import type { Post, PublicProfile } from '@/lib/types';
 
 export function ProfilePageClient({
@@ -36,7 +33,6 @@ export function ProfilePageClient({
   initialProfile: PublicProfile;
   initialPosts: Post[];
 }) {
-  const t = useTranslations('posts');
   const { user: me, isReady } = useAuth();
   const [tab, setTab] = useState<ProfileTab>('grid');
 
@@ -85,16 +81,6 @@ export function ProfilePageClient({
         />
       </div>
 
-      {/* Zero-content state — the account exists but hasn't published. */}
-      {/* {posts.length === 0 && tab === 'grid' && (
-        <Card className="mt-6 flex flex-col items-center gap-3 px-6 py-16 text-center">
-          <span className="flex size-14 items-center justify-center rounded-2xl bg-surface-3 text-ink-3">
-            <FileText className="size-6" aria-hidden />
-          </span>
-          <h2 className="text-base font-bold text-ink">{t('noPosts')}</h2>
-          <p className="max-w-sm text-sm text-ink-3">{t('noPostsDesc')}</p>
-        </Card>
-      )} */}
     </>
   );
 }

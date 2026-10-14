@@ -12,9 +12,11 @@ import { useRouter } from '@/i18n/navigation';
 import { useToast } from '@/components/toast';
 import { ApiError } from '@/lib/api';
 import { useCategories, useUploadCover } from '@/lib/queries';
+import { MarkdownEditor } from '@/components/markdown-editor';
 import { Button } from '@/components/ui/button';
 import { Field, Input, Switch, Textarea } from '@/components/ui/form';
 import { Alert, Badge, Card, CardHeader, Spinner } from '@/components/ui/primitives';
+import { getPostImages, postImagePayload } from '@/lib/post-images';
 import { cn, resolveMedia } from '@/lib/utils';
 import type { CreatePostPayload, Locale, Post } from '@/lib/types';
 
@@ -44,12 +46,12 @@ export function PostEditor({ post, mode }: { post?: Post; mode: 'create' | 'edit
   const { data: categories = [], isLoading: catsLoading } = useCategories();
   const uploadCover = useUploadCover();
 
-  const [coverUrl, setCoverUrl] = useState<string | null>(post?.coverImage ?? null);
-  /** Instagram-style gallery, upload order. Shown as a carousel on the post. */
-  const [images, setImages] = useState<string[]>(post?.images ?? []);
+  // One ordered list owns both gallery and cover; no independent cover state.
+  const [images, setImages] = useState<string[]>(() => getPostImages(post));
+  const [uploading, setUploading] = useState(false);
+  const uploadLock = useRef(false);
   const [formError, setFormError] = useState<string | null>(null);
   const [fileError, setFileError] = useState<string | null>(null);
-  const fileRef = useRef<HTMLInputElement>(null);
   const galleryRef = useRef<HTMLInputElement>(null);
   const [dragOver, setDragOver] = useState(false);
 
@@ -91,8 +93,7 @@ export function PostEditor({ post, mode }: { post?: Post; mode: 'create' | 'edit
         published: post.published ?? false,
         categories: post.categories?.map((c) => c.id) ?? [],
       });
-      setCoverUrl(post.coverImage ?? null);
-      setImages(post.images ?? []);
+      setImages(getPostImages(post));
     }
   }, [mode, post, reset]);
 
@@ -104,73 +105,57 @@ export function PostEditor({ post, mode }: { post?: Post; mode: 'create' | 'edit
     );
   };
 
-  /* ── cover upload (client-side checks mirror the ParseFilePipe) ── */
-  const handleFile = async (file?: File | null) => {
-    setFileError(null);
-    if (!file) return;
-
-    if (!/\.(png|jpe?g|webp)$/i.test(file.name) && !/^image\/(png|jpeg|webp)$/.test(file.type)) {
-      setFileError(locale === 'fa' ? 'فقط PNG، JPG، JPEG یا WEBP مجاز است' : 'Only PNG, JPG, JPEG or WEBP are allowed');
-      return;
-    }
-    if (file.size > MAX_FILE) {
-      setFileError(locale === 'fa' ? 'حجم فایل باید کمتر از ۵ مگابایت باشد' : 'File must be under 5 MB');
-      return;
-    }
-
-    try {
-      const res = await uploadCover.mutateAsync(file);
-      setCoverUrl(res.url);
-      setValue('excerpt', excerpt, { shouldDirty: true }); // keep dirty state coherent
-      toast.success(t('uploadCover'));
-    } catch (e) {
-      const msg = e instanceof ApiError ? e.messageFor(locale, tc('error')) : String(e);
-      setFileError(msg);
-      toast.error(tc('error'), msg);
-    } finally {
-      if (fileRef.current) fileRef.current.value = '';
-    }
-  };
-
-  /* ── gallery (multi-select) ── */
+  /* One multi-file upload control. Serial uploads preserve selection order.
+   * Keep each successful upload even if a later file fails; lock the entire
+   * batch (not just the individual mutation) to prevent overlapping batches. */
   const MAX_GALLERY = 10;
   const handleGallery = async (list: FileList | null) => {
-    if (!list || list.length === 0) return;
+    if (!list?.length || uploadLock.current || isSubmitting) return;
     setFileError(null);
     const files = Array.from(list);
+    if (galleryRef.current) galleryRef.current.value = '';
     if (images.length + files.length > MAX_GALLERY) {
-      setFileError(locale === 'fa' ? `حداکثر ${MAX_GALLERY} عکس در گالری` : `At most ${MAX_GALLERY} photos in the gallery`);
+      setFileError(t('galleryLimit', { count: MAX_GALLERY }));
       return;
     }
-    const urls: string[] = [];
+    if (files.some(file => !/\.(png|jpe?g|webp)$/i.test(file.name) && !/^image\/(png|jpeg|webp)$/.test(file.type))) {
+      setFileError(t('imageTypeError'));
+      return;
+    }
+    if (files.some(file => file.size > MAX_FILE)) {
+      setFileError(t('imageSizeError'));
+      return;
+    }
+    uploadLock.current = true;
+    setUploading(true);
+    const failures: string[] = [];
+    let successes = 0;
     try {
       for (const file of files) {
-        if (!/\.(png|jpe?g|webp)$/i.test(file.name) && !/^image\/(png|jpeg|webp)$/.test(file.type)) {
-          setFileError(locale === 'fa' ? 'فقط PNG، JPG، JPEG یا WEBP مجاز است' : 'Only PNG, JPG, JPEG or WEBP are allowed');
-          continue;
+        try {
+          const res = await uploadCover.mutateAsync(file);
+          setImages(prev => [...prev, res.url]);
+          successes++;
+        } catch (error) {
+          const message = error instanceof ApiError ? error.messageFor(locale, tc('error')) : tc('error');
+          failures.push(`${file.name}: ${message}`);
         }
-        if (file.size > MAX_FILE) {
-          setFileError(locale === 'fa' ? 'حجم هر فایل باید کمتر از ۵ مگابایت باشد' : 'Each file must be under 5 MB');
-          continue;
-        }
-        const res = await uploadCover.mutateAsync(file);
-        urls.push(res.url);
       }
-      if (urls.length) {
-        setImages((prev) => [...prev, ...urls]);
-        toast.success(t('gallery'));
+      if (successes) toast.success(t('gallery'));
+      if (failures.length) {
+        const message = failures.join(' · ');
+        setFileError(message);
+        toast.error(tc('error'), message);
       }
-    } catch (e) {
-      const msg = e instanceof ApiError ? e.messageFor(locale, tc('error')) : String(e);
-      setFileError(msg);
-      toast.error(tc('error'), msg);
     } finally {
-      if (galleryRef.current) galleryRef.current.value = '';
+      uploadLock.current = false;
+      setUploading(false);
     }
   };
 
   /* ── submit ── */
   const onSubmit = async (values: Form) => {
+    if (uploadLock.current) return;
     setFormError(null);
 
     // Build a payload containing ONLY the DTO's fields.
@@ -180,12 +165,7 @@ export function PostEditor({ post, mode }: { post?: Post; mode: 'create' | 'edit
       published: values.published,
     };
     if (values.excerpt?.trim()) payload.excerpt = values.excerpt.trim();
-    if (coverUrl) payload.coverImage = coverUrl;
-    if (images.length) {
-      payload.images = images;
-      // Cards and Open Graph need a single thumbnail — fall back to slide 1.
-      if (!payload.coverImage) payload.coverImage = images[0];
-    }
+    Object.assign(payload, postImagePayload(images));
     if (values.categories?.length) payload.categories = values.categories;
 
     try {
@@ -211,7 +191,7 @@ export function PostEditor({ post, mode }: { post?: Post; mode: 'create' | 'edit
     }
   };
 
-  const cover = resolveMedia(coverUrl);
+  const imagesDirty = JSON.stringify(images) !== JSON.stringify(getPostImages(post));
 
   return (
     
@@ -234,7 +214,7 @@ export function PostEditor({ post, mode }: { post?: Post; mode: 'create' | 'edit
             <ArrowRight className={cn('size-4', !rtl && 'rotate-180')} aria-hidden />
             {tc('cancel')}
           </Button>
-          {isDirty && (
+          {(isDirty || imagesDirty) && (
             <span className="text-xs font-medium text-amber-600">
               {locale === 'fa' ? 'تغییرات ذخیره‌نشده' : 'Unsaved changes'}
             </span>
@@ -248,7 +228,7 @@ export function PostEditor({ post, mode }: { post?: Post; mode: 'create' | 'edit
               {tc('delete')}
             </Button>
           )}
-          <Button type="submit" loading={isSubmitting} size="md">
+          <Button type="submit" loading={isSubmitting} disabled={uploading} size="md">
             {!isSubmitting && <Save className="size-4" aria-hidden />}
             {isSubmitting ? tc('saving') : tc('save')}
           </Button>
@@ -298,13 +278,12 @@ export function PostEditor({ post, mode }: { post?: Post; mode: 'create' | 'edit
               </Field>
 
               <Field label={t('content')} required htmlFor="content" error={errors.content?.message}>
-                <Textarea
-                  id="content"
-                  rows={16}
-                  placeholder={t('contentPlaceholder')}
-                  invalid={!!errors.content}
-                  className="font-mono text-[13px] leading-relaxed"
-                  {...register('content')}
+                <Controller
+                  name="content"
+                  control={control}
+                  render={({ field }) => (
+                    <MarkdownEditor key={post?.id ?? 'new'} id="content" value={field.value} onChange={field.onChange} onBlur={field.onBlur} ref={field.ref} invalid={!!errors.content} placeholder={t('contentPlaceholder')} />
+                  )}
                 />
               </Field>
             </div>
@@ -339,78 +318,6 @@ export function PostEditor({ post, mode }: { post?: Post; mode: 'create' | 'edit
             </Badge>
           </Card>
 
-          {/* Cover */}
-          <Card>
-            <CardHeader title={t('coverImage')} icon={<ImagePlus className="size-[18px]" aria-hidden />} />
-            <div className="space-y-3 p-5">
-              {cover ? (
-                <div className="group relative overflow-hidden rounded-xl border border-line">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={cover} alt="" className="aspect-[16/9] w-full object-cover" />
-                  <button
-                    type="button"
-                    onClick={() => setCoverUrl(null)}
-                    className="absolute top-2 rounded-lg bg-slate-900/80 p-1.5 text-white opacity-0 backdrop-blur transition group-hover:opacity-100 hover:bg-rose-600 focus:opacity-100"
-                    style={{ insetInlineEnd: '0.5rem' }}
-                    aria-label={tc('delete')}
-                  >
-                    <X className="size-3.5" aria-hidden />
-                  </button>
-                </div>
-              ) : (
-                <label
-                  onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
-                  onDragLeave={() => setDragOver(false)}
-                  onDrop={(e) => {
-                    e.preventDefault();
-                    setDragOver(false);
-                    void handleFile(e.dataTransfer.files?.[0]);
-                  }}
-                  className={cn(
-                    'flex aspect-[16/9] w-full cursor-pointer flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed transition',
-                    dragOver ? 'border-brand-500 bg-brand-500/5' : 'border-line-strong bg-surface-2 hover:border-brand-400',
-                  )}
-                >
-                  {uploadCover.isPending ? (
-                    <>
-                      <Spinner className="text-brand-500" />
-                      <span className="text-xs font-semibold text-ink-3">{t('uploading')}</span>
-                    </>
-                  ) : (
-                    <>
-                      <Upload className="size-5 text-ink-3" aria-hidden />
-                      <span className="text-xs font-semibold text-ink-2">{t('uploadCover')}</span>
-                    </>
-                  )}
-                  <input
-                    ref={fileRef}
-                    type="file"
-                    accept={ACCEPT}
-                    className="sr-only"
-                    onChange={(e) => void handleFile(e.target.files?.[0])}
-                    disabled={uploadCover.isPending}
-                  />
-                </label>
-              )}
-
-              {fileError && <p role="alert" className="text-xs font-medium text-rose-600">{fileError}</p>}
-
-              <p className="text-xs leading-relaxed text-ink-3">
-                {t('coverUploadHint')}
-              </p>
-              <p className="num-en text-[11px] text-ink-3">
-                {locale === 'fa' ? 'حداکثر ۵ مگابایت · PNG/JPG/WEBP' : 'Max 5 MB · PNG/JPG/WEBP'}
-              </p>
-
-              {cover && (
-                <Button type="button" variant="secondary" size="sm" className="w-full" onClick={() => fileRef.current?.click()}>
-                  <Upload className="size-3.5" aria-hidden />
-                  {locale === 'fa' ? 'تغییر تصویر' : 'Replace image'}
-                </Button>
-              )}
-            </div>
-          </Card>
-
           {/* Gallery */}
           <Card>
             <CardHeader
@@ -420,18 +327,19 @@ export function PostEditor({ post, mode }: { post?: Post; mode: 'create' | 'edit
             />
             <div className="space-y-3 p-5">
               {images.length > 0 && (
-                <div className="grid grid-cols-3 gap-2 sm:grid-cols-4">
+                <div className="grid grid-cols-2 items-start gap-2" data-testid="post-image-previews">
                   {images.map((url, i) => (
                     <div key={url + i} className="group relative overflow-hidden rounded-lg border border-line">
                       {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img src={resolveMedia(url) ?? url} alt="" className="aspect-square w-full object-cover" />
+                      <img src={resolveMedia(url) ?? url} alt="" className="block h-auto w-full object-contain" />
                       <span className="num-en absolute top-1 rounded bg-slate-950/70 px-1.5 text-[10px] font-bold text-white" style={{ insetInlineStart: '0.25rem' }}>
-                        {i + 1}
+                        {i === 0 ? t('coverBadge') : i + 1}
                       </span>
                       <button
                         type="button"
                         onClick={() => setImages((prev) => prev.filter((_, j) => j !== i))}
-                        className="absolute top-1 rounded-md bg-slate-900/80 p-1 text-white opacity-0 backdrop-blur transition group-hover:opacity-100 hover:bg-rose-600 focus:opacity-100"
+                        disabled={uploading || isSubmitting}
+                        className="absolute top-1 rounded-md bg-slate-900/80 p-1 text-white backdrop-blur transition hover:bg-rose-600 disabled:opacity-50"
                         style={{ insetInlineEnd: '0.25rem' }}
                         aria-label={tc('delete')}
                       >
@@ -442,19 +350,31 @@ export function PostEditor({ post, mode }: { post?: Post; mode: 'create' | 'edit
                 </div>
               )}
 
-              <label className="flex cursor-pointer items-center justify-center gap-2 rounded-xl border-2 border-dashed border-line-strong bg-surface-2 px-4 py-3 text-xs font-semibold text-ink-2 transition hover:border-brand-400">
-                {uploadCover.isPending ? <Spinner className="text-brand-500" /> : <Upload className="size-4 text-ink-3" aria-hidden />}
-                {t('addImages')}
+              <label
+                onDragOver={(e) => { e.preventDefault(); if (!uploading && !isSubmitting) setDragOver(true); }}
+                onDragLeave={() => setDragOver(false)}
+                onDrop={(e) => { e.preventDefault(); setDragOver(false); void handleGallery(e.dataTransfer.files); }}
+                className={cn(
+                  'flex items-center justify-center gap-2 rounded-xl border-2 border-dashed px-4 py-5 text-xs font-semibold text-ink-2 transition focus-within:ring-2 focus-within:ring-brand-400',
+                  uploading || isSubmitting ? 'cursor-wait opacity-60' : 'cursor-pointer hover:border-brand-400',
+                  dragOver ? 'border-brand-500 bg-brand-500/5' : 'border-line-strong bg-surface-2',
+                )}
+              >
+                {uploading ? <Spinner className="text-brand-500" /> : <Upload className="size-4 text-ink-3" aria-hidden />}
+                <span role="status">{uploading ? t('uploading') : t('addImages')}</span>
                 <input
                   ref={galleryRef}
                   type="file"
                   accept={ACCEPT}
                   multiple
+                  aria-label={t('addImages')}
                   className="sr-only"
                   onChange={(e) => void handleGallery(e.target.files)}
-                  disabled={uploadCover.isPending}
+                  disabled={uploading || isSubmitting}
                 />
               </label>
+              {fileError && <p role="alert" className="text-xs font-medium text-danger-600">{fileError}</p>}
+              <p className="text-xs leading-relaxed text-ink-3">{t('imageUploadLimits')}</p>
             </div>
           </Card>
 

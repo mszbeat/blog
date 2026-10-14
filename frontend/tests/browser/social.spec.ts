@@ -26,9 +26,13 @@ test('real API: like/follow persist through reload, back and hover; no React err
   const heart = card.locator('button[data-liked]');
   await expect(heart).toBeEnabled();
   await expect(heart).toHaveAttribute('data-liked', 'false');
+  const likeSaved = page.waitForResponse(r => r.url().endsWith(`/posts/${fixture.post.id}/like`) && r.request().method() === 'POST');
   await heart.click();
+  expect((await likeSaved).ok()).toBeTruthy();
   await expect(heart).toHaveAttribute('data-liked', 'true');
   await expect(heart.locator('.num-en')).toHaveText('1');
+  // Optimistic rendering alone does not mean the HTTP mutation has committed.
+  await expect(heart).toBeEnabled();
   await page.reload();
   await expect(heart).toHaveAttribute('data-liked', 'true');
   await expect(heart.locator('.num-en')).toHaveText('1');
@@ -38,11 +42,13 @@ test('real API: like/follow persist through reload, back and hover; no React err
   await expect(detailHeart).toHaveAttribute('data-liked', 'true');
   await expect(detailHeart.locator('.num-en')).toHaveText('1');
   const back = page.getByRole('button', { name: 'Back', exact: true });
-  await expect(back).toHaveText('');
-  await back.click();
+  await expect(back).toHaveCount(0); // BackButton was explicitly removed.
+  await page.goBack();
   await expect(page).toHaveURL(/\/en\/posts$/);
   await expect(heart).toHaveAttribute('data-liked', 'true');
+  const unlikeSaved = page.waitForResponse(r => r.url().endsWith(`/posts/${fixture.post.id}/like`) && r.request().method() === 'POST');
   await heart.click();
+  expect((await unlikeSaved).ok()).toBeTruthy();
   await expect(heart).toHaveAttribute('data-liked', 'false');
   await expect(heart.locator('.num-en')).toHaveText('0');
   await page.reload();
@@ -63,7 +69,8 @@ test('real API: like/follow persist through reload, back and hover; no React err
   await expect(following.locator('span:visible')).toHaveText('Following');
   await page.reload();
   await expect(following).toHaveAttribute('aria-pressed', 'true');
-  await page.getByRole('button', { name: 'Back', exact: true }).click();
+  await expect(page.getByRole('button', { name: 'Back', exact: true })).toHaveCount(0);
+  await page.goBack();
   await expect(page).toHaveURL(/\/en\/posts$/);
   await card.locator(`a[href="/en/users/${fixture.author.user.id}"]`).first().click();
   await expect(following).toHaveAttribute('aria-pressed', 'true');
@@ -74,7 +81,7 @@ test('real API: like/follow persist through reload, back and hover; no React err
   expect(errors).toEqual([]);
 });
 
-test('mobile RTL: optimistic rollback, refresh, and arrow returns to previous page', async ({ page }) => {
+test('mobile RTL: optimistic rollback, refresh, and browser history returns to previous page', async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   const errors: string[] = [];
   page.on('pageerror', e => errors.push(e.message));
@@ -125,8 +132,8 @@ test('mobile RTL: optimistic rollback, refresh, and arrow returns to previous pa
   await page.reload();
   await expect(page.getByRole('button', { name: fa.profile.unfollow, exact: true }).first()).toHaveAttribute('aria-pressed', 'true');
   const back = page.getByRole('button', { name: fa.common.back, exact: true });
-  await expect(back).toHaveText('');
-  await back.click();
+  await expect(back).toHaveCount(0); // BackButton was explicitly removed.
+  await page.goBack();
   await expect(page).toHaveURL(/\/fa\/posts$/);
   await expect(heart).toHaveAttribute('data-liked', 'true');
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBeTruthy();

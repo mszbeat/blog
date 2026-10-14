@@ -1,57 +1,142 @@
 'use client';
-
-import { createContext, useCallback, useContext, useEffect, useState } from 'react';
-
-export type Theme = 'light' | 'dark';
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useState,
+} from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { api } from './api';
+import {
+  applyTheme,
+  CATALOG_KEY,
+  DEFAULT_THEMES,
+  isThemeCatalog,
+  THEME_ID_KEY,
+  type SiteTheme,
+  type ThemeMode,
+} from './site-themes';
+export type Theme = ThemeMode;
 const KEY = 'blog.theme';
-
+export const THEMES_QUERY_KEY = ['appearance', 'themes'] as const;
 interface ThemeContextValue {
   theme: Theme;
   setTheme: (t: Theme) => void;
   toggle: () => void;
+  colorTheme: string;
+  setColorTheme: (id: string) => void;
+  themes: SiteTheme[];
+  catalogReady: boolean;
+  catalogError: boolean;
+  refreshThemes: () => Promise<SiteTheme[] | undefined>;
+  publishTheme: (theme: SiteTheme) => Promise<void>;
 }
-
 const ThemeContext = createContext<ThemeContextValue | null>(null);
-
-function readInitial(): Theme {
-  if (typeof window === 'undefined') return 'light';
-  const stored = localStorage.getItem(KEY);
-  if (stored === 'light' || stored === 'dark') return stored;
-  return window.matchMedia?.('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
-}
-
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
-  /* BUG FIX: this used to initialise to 'light' and then a mount effect wrote
-   * that value back to localStorage. Because switching locale remounts the
-   * whole [locale] layout (and therefore this provider), every language change
-   * silently reset a dark-mode user to light and persisted it.
-   *
-   * Reading lazily in the initializer means a remount restores the stored theme
-   * immediately, and the persisted write below only ever stores a value the
-   * user (or the system preference) actually chose. There is no hydration
-   * mismatch because the theme class is applied to <html> by an effect and by
-   * the pre-paint inline script, never rendered into the React tree. */
-  const [theme, setThemeState] = useState<Theme>(() => readInitial());
-
+  const client = useQueryClient();
+  const [theme, setTheme] = useState<Theme>('light');
+  const [colorTheme, setColorThemeState] = useState('jade');
+  const [cached, setCached] = useState(DEFAULT_THEMES);
+  const [ready, setReady] = useState(false);
+  const query = useQuery({
+    queryKey: THEMES_QUERY_KEY,
+    queryFn: async () => {
+      const catalog = await api.themes();
+      if (!isThemeCatalog(catalog)) throw new Error('Invalid theme catalog');
+      return catalog;
+    },
+    staleTime: 30_000,
+    refetchOnWindowFocus: true,
+    refetchInterval: 60_000,
+  });
+  const themes = query.data ?? cached;
   useEffect(() => {
-    const root = document.documentElement;
-    root.classList.toggle('dark', theme === 'dark');
-    root.style.colorScheme = theme;
-    localStorage.setItem(KEY, theme);
-  }, [theme]);
-
-  const setTheme = useCallback((t: Theme) => setThemeState(t), []);
-  const toggle = useCallback(() => setThemeState((t) => (t === 'dark' ? 'light' : 'dark')), []);
-
+    try {
+      const stored = localStorage.getItem(KEY);
+      setTheme(
+        stored === 'light' || stored === 'dark'
+          ? stored
+          : window.matchMedia('(prefers-color-scheme: dark)').matches
+            ? 'dark'
+            : 'light',
+      );
+      const id = localStorage.getItem(THEME_ID_KEY);
+      if (DEFAULT_THEMES.some((t) => t.id === id)) setColorThemeState(id!);
+      const saved = JSON.parse(localStorage.getItem(CATALOG_KEY) ?? 'null');
+      if (isThemeCatalog(saved)) setCached(saved);
+    } catch {
+      /* Restricted browser storage must not break the application. */
+    }
+    setReady(true);
+    const sync = (e: StorageEvent) => {
+      if (e.key === KEY && (e.newValue === 'light' || e.newValue === 'dark'))
+        setTheme(e.newValue);
+      if (
+        e.key === THEME_ID_KEY &&
+        DEFAULT_THEMES.some((t) => t.id === e.newValue)
+      )
+        setColorThemeState(e.newValue!);
+      if (e.key === CATALOG_KEY) {
+        try {
+          const v = JSON.parse(e.newValue ?? 'null');
+          if (isThemeCatalog(v)) client.setQueryData(THEMES_QUERY_KEY, v);
+        } catch {}
+      }
+    };
+    window.addEventListener('storage', sync);
+    return () => window.removeEventListener('storage', sync);
+  }, [client]);
+  useEffect(() => {
+    if (!ready) return;
+    applyTheme(themes.find((t) => t.id === colorTheme) ?? themes[0], theme);
+    try {
+      localStorage.setItem(KEY, theme);
+      localStorage.setItem(THEME_ID_KEY, colorTheme);
+      localStorage.setItem(CATALOG_KEY, JSON.stringify(themes));
+    } catch {}
+  }, [ready, theme, colorTheme, themes]);
+  const setColorTheme = useCallback((id: string) => {
+    if (DEFAULT_THEMES.some((t) => t.id === id)) setColorThemeState(id);
+  }, []);
+  const toggle = useCallback(
+    () => setTheme((t) => (t === 'dark' ? 'light' : 'dark')),
+    [],
+  );
+  const refreshThemes = useCallback(async () => {
+    const result = await query.refetch();
+    return result.data;
+  }, [query.refetch]);
+  const publishTheme = useCallback(
+    async (updated: SiteTheme) => {
+      await client.cancelQueries({ queryKey: THEMES_QUERY_KEY });
+      client.setQueryData<SiteTheme[]>(THEMES_QUERY_KEY, (old) =>
+        (old ?? DEFAULT_THEMES).map((t) => (t.id === updated.id ? updated : t)),
+      );
+    },
+    [client],
+  );
   return (
-    <ThemeContext.Provider value={{ theme, setTheme, toggle }}>
+    <ThemeContext.Provider
+      value={{
+        theme,
+        setTheme,
+        toggle,
+        colorTheme,
+        setColorTheme,
+        themes,
+        catalogReady: !!query.data,
+        catalogError: query.isError,
+        refreshThemes,
+        publishTheme,
+      }}
+    >
       {children}
     </ThemeContext.Provider>
   );
 }
-
-export function useTheme(): ThemeContextValue {
+export function useTheme() {
   const ctx = useContext(ThemeContext);
-  if (!ctx) throw new Error('useTheme must be used inside <ThemeProvider>');
+  if (!ctx) throw new Error('useTheme requires ThemeProvider');
   return ctx;
 }

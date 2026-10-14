@@ -1,0 +1,24 @@
+/* ═══════════════ محل تغییر فونت فارسی ═══════════════
+   برای تغییر فونت، فقط URL داخل src زیر را جایگزین کنید.
+   نام SitePersian یک نام داخلی ثابت است؛ لازم نیست آن را تغییر دهید.
+
+   فایل محلی: آن را داخل public/fonts بگذارید، مثلاً /fonts/MyFont.woff2
+   لینک مستقیم: https://your-domain.com/fonts/MyFont.woff2
+   لینک باید خود فایل فونت باشد، نه صفحه دانلود یا فایل CSS گوگل‌فونت.
+   سرور فونت خارجی باید اجازه CORS بدهد. فایل محلی مطمئن‌تر است.
+
+   نسخه فعلی Vazirmatn متغیر است و وزن‌های 100 تا 900 را پوشش می‌دهد.
+   اگر فونت جدیدتان متغیر نیست: وزن را 400 کنید و برای فایل Bold یک
+   @font-face دیگر با همین font-family و font-weight: 700 اضافه کنید.
+   در صورت انتخاب WOFF یا TTF، format را هم متناسب تغییر دهید.
+*/
+@font-face {
+  font-family: 'SitePersian';
+  src: url('/fonts/Vazirmatn-variable.woff2') format('woff2'); /* ← لینک فونت فارسی را اینجا عوض کنید */
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* Preserve upstream's choice of Vazirmatn for the whole interface. */
+:root { --font-inter: 'SitePersian'; }

@@ -1,3 +1,4 @@
+import type { SiteTheme } from './site-themes';
 /**
  * API client.
  *
@@ -318,6 +319,11 @@ async function request<T>(path: string, opts: RequestOptions = {}): Promise<T> {
 
 /** Paths are singular/plural exactly as the NestJS controllers declare them. */
 export const api = {
+  themes: () => request<SiteTheme[]>('/appearance/themes', { raw: true }),
+  updateTheme: (theme: SiteTheme) => request<SiteTheme>(`/appearance/themes/${encodeURIComponent(theme.id)}`, {
+    method: 'PUT', auth: true, raw: true,
+    body: {version:theme.version,light:theme.light,dark:theme.dark},
+  }),
   /* ── auth ── */
   login: (payload: LoginPayload) =>
     request<AuthResult>('/auth/login', { method: 'POST', body: payload }),

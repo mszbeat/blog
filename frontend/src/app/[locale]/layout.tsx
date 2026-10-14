@@ -1,8 +1,8 @@
+import { themeBootScript } from '@/lib/site-themes';
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { NextIntlClientProvider, hasLocale } from 'next-intl';
 import { getTranslations, setRequestLocale } from 'next-intl/server';
-import { Inter, Vazirmatn, Amiri } from 'next/font/google';
 import { routing, isRtl } from '@/i18n/routing';
 import { Providers } from '@/components/providers';
 import { SiteHeader } from '@/components/layout/site-header';
@@ -12,30 +12,14 @@ import { AppDrawer } from '@/components/layout/app-drawer';
 import { DrawerProvider } from '@/lib/drawer-context';
 import { LiveNotificationToast } from '@/components/notifications/live-toast';
 
-/* Self-hosted by next/font — they keep working inside the offline preview. */
-const inter = Vazirmatn({
-  subsets: ['latin'],
-  variable: '--font-inter',
-  display: 'swap',
-});
+// The latest upstream uses Vazirmatn for both locales; keep it local and CSS-configurable.
 
-const vazirmatn = Vazirmatn({
-  subsets: ['arabic', 'latin'],
-  variable: '--font-vazirmatn',
-  display: 'swap',
-});
 
 /**
  * Applied before first paint so the correct theme shows immediately
  * (no white flash for dark-mode users).
  */
-const themeInitScript = `
-(function(){try{
-  var s=localStorage.getItem('blog.theme');
-  var d=s?s==='dark':window.matchMedia('(prefers-color-scheme: dark)').matches;
-  if(d){document.documentElement.classList.add('dark');document.documentElement.style.colorScheme='dark';}
-}catch(e){}})();
-`;
+
 
 export function generateStaticParams() {
   return routing.locales.map((locale) => ({ locale }));
@@ -77,12 +61,11 @@ export default async function LocaleLayout({
       lang={locale}
       dir={isRtl(locale) ? 'rtl' : 'ltr'}
       suppressHydrationWarning
-      className={`${inter.variable} ${vazirmatn.variable}`}
     >
       <head>
-        <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
+        <script dangerouslySetInnerHTML={{ __html: themeBootScript }} />
       </head>
-      <body className="flex min-h-dvh flex-col bg-surface-2 font-sans text-ink antialiased">
+      <body className="flex min-h-dvh flex-col bg-surface-2 text-ink antialiased">
         <NextIntlClientProvider locale={locale}>
           <Providers>
             <DrawerProvider>

@@ -1,3 +1,4 @@
+import { DataCacheService } from './data-cache.service';
 import { Global, Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import Redis from 'ioredis';
@@ -10,6 +11,7 @@ export const REDIS_CLIENT = 'REDIS_CLIENT';
 @Module({
   imports: [ConfigModule],
   providers: [
+    DataCacheService,
     {
       provide: REDIS_CLIENT,
       inject: [ConfigService, AppLoggerService],
@@ -17,6 +19,8 @@ export const REDIS_CLIENT = 'REDIS_CLIENT';
         const client = new Redis({
           host: configService.get<string>('REDIS_URL'),
           port: configService.get<number>('REDIS_PORT'),
+          maxRetriesPerRequest: 2,
+          commandTimeout: 2500,
         });
 
         // Connection-level events are the ones that actually matter in an
@@ -39,6 +43,6 @@ export const REDIS_CLIENT = 'REDIS_CLIENT';
       },
     },
   ],
-  exports: [REDIS_CLIENT],
+  exports: [REDIS_CLIENT, DataCacheService],
 })
 export class RedisModule {}

@@ -13,10 +13,11 @@
 
 import { useEffect, useState } from 'react';
 import { useLocale, useTranslations } from 'next-intl';
-import { Languages, Moon, MoveDiagonal, Palette as PaletteIcon, Sun, X } from 'lucide-react';
-import { Link, usePathname, useRouter } from '@/i18n/navigation';
+import { Languages, Moon, MoveDiagonal, Sun, X } from 'lucide-react';
+import { usePathname, useRouter } from '@/i18n/navigation';
 import { routing } from '@/i18n/routing';
 import { useTheme, type Theme } from '@/lib/theme-context';
+import { ThemeChoices } from '@/components/theme-choices';
 import { cn } from '@/lib/utils';
 
 const MOTION_KEY = 'blog.reduceMotion';
@@ -77,7 +78,7 @@ export function SettingsDialog({ open, onClose }: { open: boolean; onClose: () =
           </button>
         </div>
 
-        <div className="space-y-6 p-5">
+        <div className="max-h-[75dvh] space-y-6 overflow-y-auto p-5">
           {/* ── Language ── */}
           <section>
             <p className="mb-2 flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-ink-3">
@@ -130,6 +131,8 @@ export function SettingsDialog({ open, onClose }: { open: boolean; onClose: () =
             </div>
           </section>
 
+          <ThemeChoices />
+
           {/* ── Motion ─ */}
           <section>
             <button
@@ -162,25 +165,7 @@ export function SettingsDialog({ open, onClose }: { open: boolean; onClose: () =
             </button>
           </section>
 
-          {/* ── Palette ──
-              A working page, not a preference: every colour token as a live
-              swatch next to its code, read straight from the COLOR CENTER in
-              globals.css. Linked from here because it is a global appearance
-              tool and Settings is where appearance lives. */}
-          <section>
-            <Link
-              href="/palette"
-              onClick={onClose}
-              className="flex items-center justify-between gap-4 rounded-xl border border-line-strong bg-surface-2 px-4 py-3 text-start transition hover:border-brand-400"
-            >
-              <span className="min-w-0">
-                <span className="flex items-center gap-1.5 text-sm font-semibold text-ink">
-                  <PaletteIcon className="size-3.5 text-ink-3" aria-hidden /> {t('palette')}
-                </span>
-                <span className="mt-0.5 block text-xs text-ink-3">{t('paletteDesc')}</span>
-              </span>
-            </Link>
-          </section>
+
         </div>
       </div>
     </div>

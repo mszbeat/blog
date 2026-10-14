@@ -2,6 +2,7 @@
 
 import { useTranslations } from 'next-intl';
 import { CalendarDays, Eye, Layers, MessageCircle } from 'lucide-react';
+import { getPostImages } from '@/lib/post-images';
 import { Link } from '@/i18n/navigation';
 import { Avatar, Badge, Card } from '@/components/ui/primitives';
 import {
@@ -59,13 +60,13 @@ export function PostCard({
           )}
 
           {/* Gallery indicator — this post opens as a slideshow. */}
-          {(post.images?.length ?? 0) > 1 && (
+          {getPostImages(post).length > 1 && (
             <span
               className="num-en absolute bottom-2 flex items-center gap-1 rounded-full bg-slate-950/65 px-2 py-0.5 text-[10px] font-bold text-white backdrop-blur-sm"
               style={{ insetInlineEnd: '0.5rem' }}
             >
               <Layers className="size-2.5" aria-hidden />
-              {post.images!.length}
+              {getPostImages(post).length}
             </span>
           )}
 

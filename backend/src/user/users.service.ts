@@ -48,21 +48,24 @@ export class UsersService {
   }
 
   async create(createUserDto: CreateUserDto, actorId?: string): Promise<User> {
-    const existingUser = await this.usersRepo.exist({
-      where: { email: createUserDto.email },
-    });
-    if (existingUser) {
-      this.log.warn('Registration blocked: email already taken', {
-        email: createUserDto.email,
-      });
-      throw ERROR_MESSAGES.USERS.emailAlreadyExists;
-    }
     const hashedPassword = await bcrypt.hash(createUserDto.password, 10);
-    const newUser = this.usersRepo.create({
-      ...createUserDto,
-      password: hashedPassword,
+    // One transaction-scoped PostgreSQL lock across all app instances. Counting
+    // outside this transaction would grant admin to two simultaneous signups.
+    const newUser = await this.usersRepo.manager.transaction(async manager => {
+      await manager.query('SELECT pg_advisory_xact_lock(74201935)');
+      const repo = manager.getRepository(User);
+      if (await repo.existsBy({ email: createUserDto.email })) {
+        throw ERROR_MESSAGES.USERS.emailAlreadyExists;
+      }
+      const first = (await repo.count()) === 0;
+      const role = actorId ? (createUserDto.role ?? UserRole.USER)
+        : first ? UserRole.ADMIN : UserRole.USER;
+      // Never trust a role field on self-registration, including internal calls.
+      return repo.save(repo.create({
+        name: createUserDto.name, email: createUserDto.email,
+        bio: createUserDto.bio, password: hashedPassword, role,
+      }));
     });
-    await this.usersRepo.save(newUser);
 
     await this.userCacheService.createCache(newUser);
 

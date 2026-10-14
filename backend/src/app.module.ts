@@ -1,3 +1,4 @@
+import { AppearanceModule } from './appearance/appearance.module';
 import { Module } from '@nestjs/common';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
@@ -58,6 +59,7 @@ import { LoggerModule } from './logger/logger.module';
     CloudinaryModule,
     SocialModule,
     NotificationModule,
+    AppearanceModule,
   ],
   controllers: [AppController],
   providers: [

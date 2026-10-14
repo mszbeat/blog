@@ -1,72 +1,44 @@
 @import 'tailwindcss';
+@import './colors.css';
+@import './fonts.css';
 
 /* Class-based dark mode (Tailwind v4 syntax). */
+@theme inline {
+  --color-brand-50: var(--palette-brand-50);
+  --color-brand-100: var(--palette-brand-100);
+  --color-brand-200: var(--palette-brand-200);
+  --color-brand-300: var(--palette-brand-300);
+  --color-brand-400: var(--palette-brand-400);
+  --color-brand-500: var(--palette-brand-500);
+  --color-brand-600: var(--palette-brand-600);
+  --color-brand-700: var(--palette-brand-700);
+  --color-brand-800: var(--palette-brand-800);
+  --color-brand-900: var(--palette-brand-900);
+  --color-accent-300: var(--palette-accent-300);
+  --color-accent-400: var(--palette-accent-400);
+  --color-accent-500: var(--palette-accent-500);
+  --color-accent-600: var(--palette-accent-600);
+  --color-plum-300: var(--palette-plum-300);
+  --color-plum-400: var(--palette-plum-400);
+  --color-plum-500: var(--palette-plum-500);
+  --color-plum-600: var(--palette-plum-600);
+  --color-danger-500: var(--palette-danger-500);
+  --color-danger-600: var(--palette-danger-600);
+  --color-success-500: var(--palette-success-500);
+  --color-warning-500: var(--palette-warning-500);
+  --color-info-500: var(--palette-info-500);
+}
+
 @custom-variant dark (&:where(.dark, .dark *));
 
-/* ═══════════════════════════════════════════════════════════════════
-   ★ مرکز رنگ سایت — COLOR CENTER ★
-   هر رنگی که در سایت دیده می‌شود از همین بخش می‌آید (از این خط تا
-   «پایان مرکز رنگ»). هیچ کامپوننتی رنگ hardcode ندارد، پس برای ساختن
-   ظاهر دلخواهت فقط همین‌جا را ویرایش کن.
-
-   کدام پیچ چه کاری می‌کند:
-     ۱) --color-brand-*   رنگ اصلی: دکمه‌ها، لینک‌ها، حالت فعال، حلقه‌ها
-     ۲) --color-accent-*  رنگ تأکید: حرف Z در لوگو، نشان‌ها، هایلایت‌ها
-     ۳) --color-plum-*    رنگ سوم: قلب/لایک و اعلان‌ها
-     ۴) --color-danger-* / success / warning / info   حالت‌های معنایی
-     ۵) --surface* --ink* --line*   کاغذ، متن و خطوط
-        (روشن در :root و تیره در .dark)
-     ۶) --elev-*          سایه‌ها
-     ۷) --grad-* / --glass-bg / --sheen / --on-brand   ترکیب‌های رنگ
-     ۸) --grad-1 … --grad-6   گرادیان پوشش پست و آیکون دسته‌بندی
-
-   نکته‌ها:
-     • rampها ده پله‌ای‌اند: ۵۰ روشن‌ترین → ۹۰۰ تیره‌ترین. پله‌های ۵۰۰/۶۰۰
-       باید آن‌قدر تیره باشند که متن سفید رویشان خوانا بماند.
-     • اگر فقط یک رنگ را عوض کنی، ترکیب‌ها (--grad-*) خودشان با او عوض
-       می‌شوند چون از همان متغیرها ساخته شده‌اند.
-     • نام توکن‌ها ثابت است؛ فقط مقدارها را عوض کن تا هیچ کامپوننتی نشکند.
-   ═══════════════════════════════════════════════════════════════════ */
+/* رنگ‌ها و ترکیب‌هایشان: ./colors.css
+   لینک و تنظیمات فونت فارسی: ./fonts.css
+   این فایل توکن‌های Tailwind و ساختار ظاهری کامپوننت‌ها را نگه می‌دارد. */
 @theme {
-  --font-sans: var(--font-inter), ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
-  --font-fa: var(--font-vazirmatn), var(--font-inter), ui-sans-serif, system-ui, sans-serif;
-  --font-fa-serif: var(--font-vazirmatn), ui-sans-serif, system-ui, sans-serif;
+  --font-sans: var(--font-inter, ui-sans-serif), ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-fa: 'SitePersian', var(--font-inter, ui-sans-serif), ui-sans-serif, system-ui, sans-serif;
+  --font-fa-serif: 'SitePersian', ui-sans-serif, system-ui, sans-serif;
   --font-mono: ui-monospace, 'SFMono-Regular', Menlo, Consolas, monospace;
-
-  /* ── Brand: "satin jade" (سبز یشمی) — the primary hue of the Jade Noir
-   * system. Desaturated a touch at the top so big fills read as polished stone
-   * rather than neon, and deep enough at 600/700 to carry white text at AA. */
-  --color-brand-50: #eefaf4;
-  --color-brand-100: #d6f2e3;
-  --color-brand-200: #aee4c8;
-  --color-brand-300: #7dd3a8;
-  --color-brand-400: #46bb85;
-  --color-brand-500: #1fa06c;
-  --color-brand-600: #15855a;
-  --color-brand-700: #126a4a;
-  --color-brand-800: #10543c;
-  --color-brand-900: #0d4534;
-
-  /* ── Accent: warm apricot/amber. A cool-warm pair against the iris primary
-   * gives the UI a second hue for highlights without leaning on blue again. */
-  --color-accent-300: #f5d78e;
-  --color-accent-400: #eec063;
-  --color-accent-500: #d9a13c;
-  --color-accent-600: #b5822a;
-
-  /* ── Plum: the third hue, used for gradients, the like/heart state and
-   * notification accents. Sits between the iris and the rose. */
-  --color-plum-300: #f3a8bc;
-  --color-plum-400: #ec7f9d;
-  --color-plum-500: #dd5580;
-  --color-plum-600: #bd3f66;
-
-  /* ── ۴) معنایی: خطر / موفقیت / هشدار / اطلاع ── */
-  --color-danger-500: #f43f5e;
-  --color-danger-600: #e11d48;
-  --color-success-500: #22c55e;
-  --color-warning-500: #f59e0b;
-  --color-info-500: #38bdf8;
 
   --radius-card: 1.25rem;
   --radius-xl2: 1.5rem;
@@ -133,115 +105,11 @@
 
 /* ── Light: neutrals carry a faint violet cast so the page and the iris
       primary feel like one system rather than grey + a painted accent. ── */
-:root {
-  --surface: #fbfdfc;
-  --surface-2: #f1f6f3;      /* page background — a deeper, greener paper */
-  --surface-3: #e7efea;      /* subtle fills */
-  --surface-4: #d9e5de;
-  --ink: #0f1613;
-  --ink-2: #41504a;
-  --ink-3: #6b7a73;
-  --ink-4: #95a29b;
-  --line: #e0eae5;
-  --line-strong: #ccdbd4;
 
-  --elev-1: 0 1px 2px rgba(15, 22, 19, 0.05), 0 1px 3px rgba(15, 22, 19, 0.07);
-  --elev-2: 0 2px 4px rgba(15, 22, 19, 0.05), 0 10px 24px -8px rgba(13, 69, 52, 0.16);
-  --elev-3: 0 4px 8px rgba(15, 22, 19, 0.06), 0 20px 44px -14px rgba(13, 69, 52, 0.24);
-  --elev-brand: 0 10px 26px -10px rgba(21, 133, 90, 0.55);
-  --elev-plum: 0 10px 26px -10px rgba(221, 85, 128, 0.5);
-
-  /* ── ۷) ترکیب‌های رنگ (recipes) ──
-     هر کلاس رنگیِ سایت یکی از این‌ها را مصرف می‌کند؛ پس تغییر ترکیب‌ها
-     فقط همین‌جا اتفاق می‌افتد، نه در ده فایل کامپوننت. */
-  --on-brand: #ffffff;        /* رنگ متن/آیکون روی زمینه‌ی brand */
-  --sheen: #ffffff;           /* برقِ سفیدِ گرادیان ساتنی */
-
-  /* ساتنی: دکمه‌های اصلی، FAB نویگیشن، گزینه‌ی انتخاب‌شده‌ی تنظیمات */
-  --grad-satin: linear-gradient(
-    155deg,
-    color-mix(in oklab, var(--color-brand-400) 58%, var(--sheen)) 0%,
-    var(--color-brand-500) 45%,
-    var(--color-brand-700) 100%
-  );
-  /* تیترهای گرادیانی */
-  --grad-text: linear-gradient(
-    100deg,
-    var(--color-brand-600) 0%,
-    var(--color-plum-500) 52%,
-    var(--color-accent-500) 100%
-  );
-  /* حرف Z در لوگو */
-  --grad-logo: linear-gradient(
-    140deg,
-    var(--color-accent-300) 0%,
-    var(--color-accent-500) 58%,
-    var(--color-plum-500) 100%
-  );
-  /* هاله‌ی نرم پس‌زمینه‌ی hero */
-  --grad-mesh:
-    radial-gradient(at 12% 8%, color-mix(in oklab, var(--color-brand-500) 16%, transparent) 0, transparent 52%),
-    radial-gradient(at 88% 4%, color-mix(in oklab, var(--color-plum-500) 13%, transparent) 0, transparent 48%),
-    radial-gradient(at 88% 4%, color-mix(in oklab, var(--color-plum-500) 13%, transparent) 0, transparent 48%),
-    radial-gradient(at 88% 4%, color-mix(in oklab, var(--color-plum-900) 13%, transparent) 0, transparent 48%),
-    radial-gradient(at 88% 4%, color-mix(in oklab, var(--color-plum-500) 13%, transparent) 0, transparent 48%),
-    radial-gradient(at 62% 96%, color-mix(in oklab, var(--color-accent-500) 12%, transparent) 0, transparent 50%);
-  /* شبکه‌ی خطوط پس‌زمینه */
-  --grad-grid:
-    linear-gradient(to right, var(--line) 1px, transparent 1px),
-    linear-gradient(to bottom, var(--line) 1px, transparent 1px);
-  /* محو شدن متن برای «ادامه» */
-  --grad-fade: linear-gradient(to bottom, transparent, var(--surface));
-  /* پنل شیشه‌ای */
-  --glass-bg: color-mix(in oklab, var(--surface) 78%, transparent);
-  --glass-halo: color-mix(in oklab, var(--color-accent-500) 22%, transparent);
-
-  /* ── ۸) گرادیان پوشش پست / آیکون دسته‌بندی ──
-     lib/utils.ts → gradientFor() بر اساس هشِ شناسه یکی از این شش کلاس
-     (grad-1 … grad-6) را برمی‌گرداند. */
-  --grad-1-from: #1f204a43;  --grad-1-to: #341a4c40;
-  --grad-2-from: #03293b41;  --grad-2-to: #0c424a3e;
-  --grad-3-from: #4d32043e;  --grad-3-to: #57182245;
-  --grad-4-from: #04392749;  --grad-4-to: #03263646;
-  --grad-5-from: #1e143643;  --grad-5-to: #3d132844;
-  --grad-6-from: #052d2844;  --grad-6-to: #1e2e0543;
-}
 
 /* ── Dark: navy-plum base. The page is darker than the cards so cards read
       as elevated, and the hue shift keeps it from being flat neutral grey. ── */
-.dark {
-  --surface: #101613;        /* card */
-  --surface-2: #090d0b;      /* page — near-black, green-tinted */
-  --surface-3: #17201c;
-  --surface-4: #202b26;
-  --ink: #eaf3ee;
-  --ink-2: #a9b8b0;
-  --ink-3: #7c8b84;
-  --ink-4: #5b6a63;
-  --line: #1c2621;
-  --line-strong: #2b3831;
 
-  --elev-1: 0 1px 2px rgba(0, 0, 0, 0.5);
-  --elev-2: 0 2px 6px rgba(0, 0, 0, 0.5), 0 12px 28px -10px rgba(0, 0, 0, 0.65);
-  --elev-3: 0 6px 14px rgba(0, 0, 0, 0.55), 0 26px 52px -18px rgba(0, 0, 0, 0.8);
-  --elev-brand: 0 10px 28px -10px rgba(31, 160, 108, 0.45);
-  --elev-plum: 0 10px 28px -10px rgba(236, 127, 157, 0.4);
-
-  /* ── ۷b) ترکیب‌هایی که در حالت تیره فرق می‌کنند ──
-     در تیره پله‌های روشن‌ترِ هر ramp خوانا‌ترند و برق ساتنی باید کمتر باشد. */
-  --grad-text: linear-gradient(
-    100deg,
-    var(--color-brand-300) 0%,
-    var(--color-plum-300) 52%,
-    var(--color-accent-300) 100%
-  );
-  --grad-satin: linear-gradient(
-    155deg,
-    color-mix(in oklab, var(--color-brand-400) 40%, var(--sheen)) 0%,
-    var(--color-brand-500) 48%,
-    var(--color-brand-800) 100%
-  );
-}
 
 @theme inline {
   --color-surface: var(--surface);
@@ -680,4 +548,34 @@ html[dir='rtl'] .prose-blog blockquote { border-radius: 0.625rem 0 0 0.625rem; }
 /* Instagram-style bottom navigation (mobile only). */
 .bottom-nav {
   padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+/* Markdown content must stay within the article measure. */
+.prose-blog { overflow-wrap: anywhere; }
+.prose-blog pre { direction: ltr; text-align: left; max-width: 100%; }
+.prose-blog pre code { white-space: pre; overflow-wrap: normal; }
+.prose-blog del { text-decoration: line-through; }
+
+/* گالری پست: سقف ارتفاع قاب. تصاویر با نسبت اصلی و بدون برش جا می‌گیرند.
+   برای تغییر اندازه، فقط مقدار --post-gallery-max-height را ویرایش کنید. */
+.post-gallery-frame {
+  --post-gallery-max-height: 560px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-width: 0;
+  height: min(var(--post-gallery-max-height), 65svh);
+}
+.post-gallery-frame > .post-gallery-image {
+  display: block;
+  flex: none;
+  width: auto;
+  height: auto;
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+}
+@media (max-width: 639px) {
+  .post-gallery-frame { --post-gallery-max-height: 360px; }
 }
